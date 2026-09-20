@@ -1,0 +1,14 @@
+[
+    {
+        "product_id": 1,
+        "name": "Laptop",
+        "price": 850000,
+        "quantity": 5
+    },
+    {
+        "product_id": 2,
+        "name": "Mouse",
+        "price": 15000,
+        "quantity": 2
+    }
+]
