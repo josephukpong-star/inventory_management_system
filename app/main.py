@@ -4,6 +4,10 @@ def add_product(inventory):
     product = ui.get_product_input()
     inventory.add_product(product)
     print("Product added successfully.")
+def update_product(inventory):
+    product_id, name, price, category = ui.get_product_update_input()
+    inventory.update_product(product_id, name=name, price=price, category=category)
+    print("Product updated successfully.")
 def view_products(inventory):
     products = inventory.get_all_products()
     ui.display_products(products)
@@ -101,6 +105,8 @@ def main(file_path="data/inventory.json"):
                 show_inventory_alerts(inventory)
             elif choice == 18:
                 save_inventory_report(inventory)
+            elif choice == 19:
+                update_product(inventory)
         except ValueError as error:
             print(f"Error: {error}")
         except FileNotFoundError:

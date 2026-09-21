@@ -1824,3 +1824,47 @@ def test_generate_inventory_report_rejects_whitespace_category():
     inventory = InventoryService()
     with pytest.raises(ValueError, match="Category cannot be empty"):
         inventory.generate_inventory_report(category="   ")
+def test_update_product_details():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5, "Electronics")
+    inventory.add_product(product)
+    inventory.update_product(1, name="Laptop Pro", price=900000, category="Computers")
+    updated_product = inventory.get_product(1)
+    assert updated_product.name == "Laptop Pro"
+    assert updated_product.price == 900000
+    assert updated_product.category == "Computers"
+    assert updated_product.product_id == 1
+    assert updated_product.quantity == 5
+def test_update_product_rejects_empty_name():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5, "Electronics")
+    inventory.add_product(product)
+    with pytest.raises(ValueError, match="Product name cannot be empty"):
+        inventory.update_product(1, name="   ")
+def test_update_product_rejects_negative_price():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5, "Electronics")
+    inventory.add_product(product)
+    with pytest.raises(ValueError, match="Price cannot be negative"):
+        inventory.update_product(1, price=-100)
+def test_update_product_rejects_empty_category():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5, "Electronics")
+    inventory.add_product(product)
+    with pytest.raises(ValueError, match="Category cannot be empty"):
+        inventory.update_product(1, category="   ")
+def test_update_product_partial_update():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5, "Electronics")
+    inventory.add_product(product)
+    inventory.update_product(1, price=900000)
+    updated_product = inventory.get_product(1)
+    assert updated_product.name == "Laptop"
+    assert updated_product.price == 900000
+    assert updated_product.category == "Electronics"
+    assert updated_product.product_id == 1
+    assert updated_product.quantity == 5
+def test_update_product_not_found():
+    inventory = InventoryService()
+    with pytest.raises(ValueError, match="Product not found"):
+        inventory.update_product(999, price=500000)

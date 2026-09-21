@@ -24,13 +24,14 @@ def display_menu():
     print("16. Dashboard")
     print("17. Inventory Alerts")
     print("18. Save Inventory Report")
+    print("19. Update Product")
 def get_menu_choice():
     while True:
         try:
             choice = int(input("Choose an option: "))
-            if 1 <= choice <= 18:
+            if 1 <= choice <= 19:
                 return choice
-            print("Invalid choice. Please enter a number between 1 and 18.")
+            print("Invalid choice. Please enter a number between 1 and 19.")
         except ValueError:
             print("Invalid input. Please enter a number.")
 def get_stock_status(quantity, low_stock_threshold=5):
@@ -87,6 +88,24 @@ def get_product_input():
             print("Invalid Quantity. Please enter a whole number.")
     category = input("Enter Product Category: ")
     return Product(product_id, name, price, quantity, category)
+def get_product_update_input():
+    product_id = get_product_id()
+    name = input("Enter new product name (press Enter to keep current): ")
+    while True:
+        price_input = input("Enter new product price (press Enter to keep current): ")
+        if price_input == "":
+            price = None
+            break
+        try:
+            price = float(price_input)
+            if price < 0:
+                print("Price cannot be negative.")
+                continue
+            break
+        except ValueError:
+            print("Invalid Price. Please enter a number.")
+    category = input("Enter new product category (press Enter to keep current): ")
+    return product_id, name or None, price, category or None
 def get_search_term():
     return input("Enter search term: ")
 def get_product_id():

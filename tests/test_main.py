@@ -241,3 +241,21 @@ def test_main_transaction_value_summary(monkeypatch, capsys):
     main()
     captured = capsys.readouterr()
     assert "TRANSACTION VALUE SUMMARY" in captured.out
+def test_main_update_product():
+    from app.main import main
+    from app.models import Product
+    product = Product(1, "Laptop", 850000, 5, "Electronics")
+    with patch("app.ui.display_menu"), \
+         patch("app.ui.get_menu_choice", side_effect=[1, 19, 15]), \
+         patch("app.ui.get_product_input", return_value=product), \
+         patch("app.ui.get_product_update_input", return_value=(1, "Laptop Pro", 900000, "Computers")), \
+         patch("builtins.print") as mock_print:
+        inventory = main()
+    updated_product = inventory.get_product(1)
+    assert updated_product.name == "Laptop Pro"
+    assert updated_product.price == 900000
+    assert updated_product.category == "Computers"
+    assert updated_product.quantity == 5
+    mock_print.assert_any_call("Product added successfully.")
+    mock_print.assert_any_call("Product updated successfully.")
+    mock_print.assert_any_call("Goodbye!")

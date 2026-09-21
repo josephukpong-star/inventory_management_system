@@ -63,6 +63,22 @@ class InventoryService:
         product = self.get_product(product_id)
         self.update_quantity(product_id, -quantity)
         self._record_transaction(product, "STOCK-OUT", quantity)
+    def update_product(self, product_id, name=None, price=None, category=None):
+        product = self.get_product(product_id)
+        if name is not None:
+            if not name or not name.strip():
+                raise ValueError("Product name cannot be empty")
+            product.name = name.strip().title()
+        if price is not None:
+            if isinstance(price, bool) or not isinstance(price, (int, float)):
+                raise ValueError("Price must be a number")
+            if price < 0:
+                raise ValueError("Price cannot be negative")
+            product.price = price
+        if category is not None:
+            if not category or not category.strip():
+                raise ValueError("Category cannot be empty")
+            product.category = category.strip().title()
     def remove_product(self, product_id):
         product = self.get_product(product_id)
         self.products.remove(product)

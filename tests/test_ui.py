@@ -22,10 +22,10 @@ def test_get_menu_choice_valid(monkeypatch):
     assert result == 3
 def test_get_menu_choice_invalid_then_valid(monkeypatch):
     from app.ui import get_menu_choice
-    inputs = iter(["abc", "19", "18"])
+    inputs = iter(["abc", "20", "19"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
     result = get_menu_choice()
-    assert result == 18
+    assert result == 19
 def test_display_products(capsys):
     from app.ui import display_products
     from app.models import Product
@@ -327,3 +327,15 @@ def test_display_menu_includes_save_inventory_report(capsys):
     display_menu()
     captured = capsys.readouterr()
     assert "18. Save Inventory Report" in captured.out
+def test_get_product_update_input(monkeypatch):
+    from app.ui import get_product_update_input
+    inputs = iter(["1", "Laptop Pro", "900000", "Computers",])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    result = get_product_update_input()
+    assert result == (1, "Laptop Pro", 900000.0, "Computers")
+def test_get_product_update_input_partial_update(monkeypatch):
+    from app.ui import get_product_update_input
+    inputs = iter(["1", "", "950000", "",])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    result = get_product_update_input()
+    assert result == (1, None, 950000.0, None)
