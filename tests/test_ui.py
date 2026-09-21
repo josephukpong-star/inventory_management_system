@@ -339,3 +339,21 @@ def test_get_product_update_input_partial_update(monkeypatch):
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
     result = get_product_update_input()
     assert result == (1, None, 950000.0, None)
+def test_get_confirmation_yes(monkeypatch):
+    from app.ui import get_confirmation
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+    result = get_confirmation("Are you sure you want to remove this product?")
+    assert result is True
+def test_get_confirmation_no(monkeypatch):
+    from app.ui import get_confirmation
+    monkeypatch.setattr("builtins.input", lambda _: "n")
+    result = get_confirmation("Are you sure you want to remove this product?")
+    assert result is False
+def test_get_confirmation_invalid_then_valid(monkeypatch, capsys):
+    from app.ui import get_confirmation
+    inputs = iter(["maybe", "y"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    result = get_confirmation("Are you sure you want to remove this product?")
+    assert result is True
+    captured = capsys.readouterr()
+    assert "Invalid input. Please enter y or n." in captured.out

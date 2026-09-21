@@ -27,6 +27,10 @@ def stock_out(inventory):
     print("Stock removed successfully.")
 def remove_product(inventory):
     product_id = ui.get_product_id()
+    confirmed = ui.get_confirmation("Are you sure you want to remove this product?")
+    if not confirmed:
+        print("Product removal cancelled.")
+        return
     inventory.remove_product(product_id)
     print("Product removed successfully.")
 def show_inventory_summary(inventory):

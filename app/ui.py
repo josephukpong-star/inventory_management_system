@@ -115,6 +115,12 @@ def get_product_id():
             return product_id
         except ValueError:
             print("Invalid Product ID. Please enter a number.")
+def get_confirmation(prompt):
+    while True:
+        response = input(f"{prompt} (y/n): ").strip().lower()
+        if response in ("y", "n"):
+            return response == "y"
+        print("Invalid input. Please enter y or n.")
 def get_quantity_change():
     while True:
         try:

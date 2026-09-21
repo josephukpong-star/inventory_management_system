@@ -107,6 +107,7 @@ def test_main_remove_product():
          patch("app.ui.get_product_input", return_value=product), \
          patch("app.ui.get_product_id", return_value=1), \
          patch("app.ui.display_products") as mock_display_products, \
+         patch("app.ui.get_confirmation", return_value=True), \
          patch("builtins.print"):
         inventory = main()
         assert inventory.get_all_products() == []
@@ -259,3 +260,18 @@ def test_main_update_product():
     mock_print.assert_any_call("Product added successfully.")
     mock_print.assert_any_call("Product updated successfully.")
     mock_print.assert_any_call("Goodbye!")
+def test_main_remove_product_cancelled():
+    from app.main import main
+    from app.models import Product
+    product = Product(1, "Laptop", 850000, 5)
+    with patch("app.ui.display_menu"), \
+         patch("app.ui.get_menu_choice", side_effect=[1, 6, 2, 15]), \
+         patch("app.ui.get_product_input", return_value=product), \
+         patch("app.ui.get_product_id", return_value=1), \
+         patch("app.ui.get_confirmation", return_value=False), \
+         patch("app.ui.display_products") as mock_display_products, \
+         patch("builtins.print") as mock_print:
+        inventory = main()
+    assert len(inventory.get_all_products()) == 1
+    assert inventory.get_product(1).name == "Laptop"
+    mock_print.assert_any_call("Product removal cancelled.")
