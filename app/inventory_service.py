@@ -5,6 +5,7 @@ class InventoryService:
     def __init__(self):
         self.products = []
         self.transactions = []
+        self.removed_products = []
     def _validate_low_stock_threshold(self, low_stock_threshold):
         if isinstance(low_stock_threshold, bool) or not isinstance(low_stock_threshold, int):
             raise ValueError("Low stock threshold must be an integer")
@@ -34,6 +35,8 @@ class InventoryService:
         self.products.append(product)
     def get_all_products(self):
         return self.products.copy()
+    def get_removed_products(self):
+        return self.removed_products.copy()
     def get_product(self, product_id):
         for product in self.products:
             if product.product_id == product_id:
@@ -82,6 +85,14 @@ class InventoryService:
     def remove_product(self, product_id):
         product = self.get_product(product_id)
         self.products.remove(product)
+        self.removed_products.append(product)
+    def restore_product(self, product_id):
+        for product in self.removed_products:
+            if product.product_id == product_id:
+                self.removed_products.remove(product)
+                self.products.append(product)
+                return
+        raise ValueError("Removed product not found")
     def calculate_total_value(self):
         total = 0
         for product in self.products:

@@ -22,7 +22,7 @@ def test_get_menu_choice_valid(monkeypatch):
     assert result == 3
 def test_get_menu_choice_invalid_then_valid(monkeypatch):
     from app.ui import get_menu_choice
-    inputs = iter(["abc", "20", "19"])
+    inputs = iter(["abc", "22", "19"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
     result = get_menu_choice()
     assert result == 19
@@ -36,6 +36,15 @@ def test_display_products(capsys):
     assert "850,000.00" in captured.out
     assert "Mouse" in captured.out
     assert "15,000.00" in captured.out
+def test_display_removed_products(capsys):
+    from app.ui import display_removed_products
+    from app.models import Product
+    products = [Product(1, "Laptop", 850000, 5)]
+    display_removed_products(products)
+    captured = capsys.readouterr()
+    assert "REMOVED PRODUCTS" in captured.out
+    assert "Laptop" in captured.out
+    assert "₦850,000.00" in captured.out
 def test_display_products_empty(capsys):
     from app.ui import display_products
     display_products([])
@@ -357,3 +366,22 @@ def test_get_confirmation_invalid_then_valid(monkeypatch, capsys):
     assert result is True
     captured = capsys.readouterr()
     assert "Invalid input. Please enter y or n." in captured.out
+def test_display_removed_products_empty(capsys):
+    from app.ui import display_removed_products
+    display_removed_products([])
+    captured = capsys.readouterr()
+    assert "REMOVED PRODUCTS" in captured.out
+    assert "No removed products found" in captured.out
+def test_get_restore_product_id(monkeypatch):
+    from app.ui import get_restore_product_id
+    monkeypatch.setattr("builtins.input", lambda _: "5")
+    result = get_restore_product_id()
+    assert result == 5
+def test_get_restore_product_id_invalid_then_valid(monkeypatch, capsys):
+    from app.ui import get_restore_product_id
+    inputs = iter(["abc", "5"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    result = get_restore_product_id()
+    assert result == 5
+    captured = capsys.readouterr()
+    assert "Invalid Product ID. Please enter a number." in captured.out

@@ -25,13 +25,15 @@ def display_menu():
     print("17. Inventory Alerts")
     print("18. Save Inventory Report")
     print("19. Update Product")
+    print("20. View Removed Products")
+    print("21. Restore Product")
 def get_menu_choice():
     while True:
         try:
             choice = int(input("Choose an option: "))
-            if 1 <= choice <= 19:
+            if 1 <= choice <= 21:
                 return choice
-            print("Invalid choice. Please enter a number between 1 and 19.")
+            print("Invalid choice. Please enter a number between 1 and 21.")
         except ValueError:
             print("Invalid input. Please enter a number.")
 def get_stock_status(quantity, low_stock_threshold=5):
@@ -60,6 +62,20 @@ def display_products(products):
         print(f"Quantity: {product.quantity}")
         stock_status = get_stock_status(product.quantity)
         print(f"Stock Status: {stock_status}") 
+def display_removed_products(products):
+    print("========================================")
+    print("            REMOVED PRODUCTS")
+    print("========================================")
+    if not products:
+        print("No removed products found")
+        return
+    for product in products:
+        print()
+        print(f"ID: {product.product_id}")
+        print(f"Name: {product.name}")
+        print(f"Price: {format_currency(product.price)}")
+        print(f"Quantity: {product.quantity}")
+        print(f"Category: {product.category}")
 def get_product_input():
     while True:
         try:
@@ -112,6 +128,13 @@ def get_product_id():
     while True:
         try:
             product_id = int(input("Enter Product ID: "))
+            return product_id
+        except ValueError:
+            print("Invalid Product ID. Please enter a number.")
+def get_restore_product_id():
+    while True:
+        try:
+            product_id = int(input("Enter Product ID to restore: "))
             return product_id
         except ValueError:
             print("Invalid Product ID. Please enter a number.")

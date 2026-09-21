@@ -275,3 +275,41 @@ def test_main_remove_product_cancelled():
     assert len(inventory.get_all_products()) == 1
     assert inventory.get_product(1).name == "Laptop"
     mock_print.assert_any_call("Product removal cancelled.")
+def test_main_view_removed_products():
+    from app.main import main
+    from app.models import Product
+    product = Product(1, "Laptop", 850000, 5)
+    with patch("app.ui.display_menu"), \
+         patch("app.ui.get_menu_choice", side_effect=[1, 6, 20, 15]), \
+         patch("app.ui.get_product_input", return_value=product), \
+         patch("app.ui.get_product_id", return_value=1), \
+         patch("app.ui.get_confirmation", return_value=True), \
+         patch("app.ui.display_removed_products") as mock_display_removed_products, \
+         patch("builtins.print"):
+        inventory = main()
+    mock_display_removed_products.assert_called_once()
+    removed_products = mock_display_removed_products.call_args[0][0]
+    assert len(removed_products) == 1
+    assert removed_products[0].product_id == 1
+def test_main_restore_product():
+    from app.main import main
+    from app.models import Product
+    product = Product(1, "Laptop", 850000, 5)
+    with patch("app.ui.display_menu"), \
+         patch("app.ui.get_menu_choice", side_effect=[1, 6, 21, 15]), \
+         patch("app.ui.get_product_input", return_value=product), \
+         patch("app.ui.get_product_id", return_value=1), \
+         patch("app.ui.get_confirmation", return_value=True), \
+         patch("app.ui.get_restore_product_id", return_value=1), \
+         patch("builtins.print"):
+         inventory = main()
+    assert len(inventory.get_all_products()) == 1
+    assert inventory.get_product(1).name == "Laptop"
+def test_main_restore_product_not_found():
+    from app.main import main
+    with patch("app.ui.display_menu"), \
+         patch("app.ui.get_menu_choice", side_effect=[21, 15]), \
+         patch("app.ui.get_restore_product_id", return_value=999), \
+         patch("builtins.print") as mock_print:
+        main()
+    mock_print.assert_any_call("Error: Removed product not found")

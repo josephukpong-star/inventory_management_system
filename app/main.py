@@ -11,6 +11,13 @@ def update_product(inventory):
 def view_products(inventory):
     products = inventory.get_all_products()
     ui.display_products(products)
+def view_removed_products(inventory):
+    products = inventory.get_removed_products()
+    ui.display_removed_products(products)
+def restore_product(inventory):
+    product_id = ui.get_restore_product_id()
+    inventory.restore_product(product_id)
+    print("Product restored successfully.")
 def search_products(inventory):
     search_term = ui.get_search_term()
     results = inventory.search_products(search_term)
@@ -111,6 +118,10 @@ def main(file_path="data/inventory.json"):
                 save_inventory_report(inventory)
             elif choice == 19:
                 update_product(inventory)
+            elif choice == 20:
+                view_removed_products(inventory)
+            elif choice == 21:
+                restore_product(inventory)
         except ValueError as error:
             print(f"Error: {error}")
         except FileNotFoundError:

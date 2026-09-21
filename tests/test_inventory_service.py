@@ -1868,3 +1868,36 @@ def test_update_product_not_found():
     inventory = InventoryService()
     with pytest.raises(ValueError, match="Product not found"):
         inventory.update_product(999, price=500000)
+def test_remove_product_moves_product_to_removed_products():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    assert inventory.get_all_products() == []
+    assert product in inventory.removed_products
+def test_restore_product_moves_product_back_to_inventory():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    inventory.restore_product(1)
+    assert product in inventory.get_all_products()
+    assert product not in inventory.removed_products
+def test_restore_product_not_found():
+    from app.inventory_service import InventoryService
+    inventory = InventoryService()
+    with pytest.raises(ValueError, match="Removed product not found"):
+        inventory.restore_product(999)
+def test_get_removed_products_returns_removed_products():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    removed_products = inventory.get_removed_products()
+    assert removed_products == [product]
