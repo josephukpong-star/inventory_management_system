@@ -22,7 +22,7 @@ def test_get_menu_choice_valid(monkeypatch):
     assert result == 3
 def test_get_menu_choice_invalid_then_valid(monkeypatch):
     from app.ui import get_menu_choice
-    inputs = iter(["abc", "22", "19"])
+    inputs = iter(["abc", "23", "19"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
     result = get_menu_choice()
     assert result == 19
@@ -385,3 +385,14 @@ def test_get_restore_product_id_invalid_then_valid(monkeypatch, capsys):
     assert result == 5
     captured = capsys.readouterr()
     assert "Invalid Product ID. Please enter a number." in captured.out
+def test_get_permanently_delete_product_id(monkeypatch):
+    from app.ui import get_permanently_delete_product_id
+    monkeypatch.setattr("builtins.input", lambda _: "5")
+    result = get_permanently_delete_product_id()
+    assert result == 5
+def test_get_permanently_delete_product_id_invalid_then_valid(monkeypatch):
+    from app.ui import get_permanently_delete_product_id
+    inputs = iter(["abc", "5"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    result = get_permanently_delete_product_id()
+    assert result == 5

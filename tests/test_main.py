@@ -313,3 +313,31 @@ def test_main_restore_product_not_found():
          patch("builtins.print") as mock_print:
         main()
     mock_print.assert_any_call("Error: Removed product not found")
+def test_main_permanently_delete_product(monkeypatch, capsys):
+    from app.main import permanently_delete_product
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    monkeypatch.setattr("app.main.ui.get_permanently_delete_product_id", lambda: 1)
+    monkeypatch.setattr("app.main.ui.get_confirmation", lambda prompt: True)
+    permanently_delete_product(inventory)
+    captured = capsys.readouterr()
+    assert "Product permanently deleted successfully." in captured.out
+    assert inventory.get_removed_products() == []
+def test_main_permanently_delete_product_cancelled(monkeypatch, capsys):
+    from app.main import permanently_delete_product
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    monkeypatch.setattr("app.main.ui.get_permanently_delete_product_id", lambda: 1)
+    monkeypatch.setattr("app.main.ui.get_confirmation", lambda prompt: False)
+    permanently_delete_product(inventory)
+    captured = capsys.readouterr()
+    assert "Permanent deletion cancelled." in captured.out
+    assert product in inventory.get_removed_products()

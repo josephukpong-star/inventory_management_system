@@ -93,6 +93,12 @@ class InventoryService:
                 self.products.append(product)
                 return
         raise ValueError("Removed product not found")
+    def permanently_delete_product(self, product_id):
+        for product in self.removed_products:
+            if product.product_id == product_id:
+                self.removed_products.remove(product)
+                return
+        raise ValueError("Removed product not found")
     def calculate_total_value(self):
         total = 0
         for product in self.products:

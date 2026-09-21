@@ -27,13 +27,14 @@ def display_menu():
     print("19. Update Product")
     print("20. View Removed Products")
     print("21. Restore Product")
+    print("22. Permanently Delete Product")
 def get_menu_choice():
     while True:
         try:
             choice = int(input("Choose an option: "))
-            if 1 <= choice <= 21:
+            if 1 <= choice <= 22:
                 return choice
-            print("Invalid choice. Please enter a number between 1 and 21.")
+            print("Invalid choice. Please enter a number between 1 and 22.")
         except ValueError:
             print("Invalid input. Please enter a number.")
 def get_stock_status(quantity, low_stock_threshold=5):
@@ -136,6 +137,12 @@ def get_restore_product_id():
         try:
             product_id = int(input("Enter Product ID to restore: "))
             return product_id
+        except ValueError:
+            print("Invalid Product ID. Please enter a number.")
+def get_permanently_delete_product_id():
+    while True:
+        try:
+            return int(input("Enter Product ID to permanently delete: "))
         except ValueError:
             print("Invalid Product ID. Please enter a number.")
 def get_confirmation(prompt):

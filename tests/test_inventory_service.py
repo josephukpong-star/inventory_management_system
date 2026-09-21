@@ -1901,3 +1901,22 @@ def test_get_removed_products_returns_removed_products():
     inventory.remove_product(1)
     removed_products = inventory.get_removed_products()
     assert removed_products == [product]
+def test_permanently_delete_removed_product():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    inventory.permanently_delete_product(1)
+    assert product not in inventory.removed_products
+    assert inventory.get_all_products() == []
+def test_permanently_delete_product_not_found():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    with pytest.raises(ValueError, match="Removed product not found"):
+        inventory.permanently_delete_product(1)
+    assert product in inventory.get_all_products()

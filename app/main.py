@@ -18,6 +18,14 @@ def restore_product(inventory):
     product_id = ui.get_restore_product_id()
     inventory.restore_product(product_id)
     print("Product restored successfully.")
+def permanently_delete_product(inventory):
+    product_id = ui.get_permanently_delete_product_id()
+    confirmed = ui.get_confirmation("Are you sure you want to permanently delete this product? (y/n): ")
+    if not confirmed:
+        print("Permanent deletion cancelled.")
+        return
+    inventory.permanently_delete_product(product_id)
+    print("Product permanently deleted successfully.")
 def search_products(inventory):
     search_term = ui.get_search_term()
     results = inventory.search_products(search_term)
@@ -122,6 +130,8 @@ def main(file_path="data/inventory.json"):
                 view_removed_products(inventory)
             elif choice == 21:
                 restore_product(inventory)
+            elif choice == 22:
+                permanently_delete_product(inventory)
         except ValueError as error:
             print(f"Error: {error}")
         except FileNotFoundError:
