@@ -22,7 +22,7 @@ def test_get_menu_choice_valid(monkeypatch):
     assert result == 3
 def test_get_menu_choice_invalid_then_valid(monkeypatch):
     from app.ui import get_menu_choice
-    inputs = iter(["abc", "23", "19"])
+    inputs = iter(["abc", "24", "19"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
     result = get_menu_choice()
     assert result == 19
@@ -396,3 +396,20 @@ def test_get_permanently_delete_product_id_invalid_then_valid(monkeypatch):
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
     result = get_permanently_delete_product_id()
     assert result == 5
+def test_display_deleted_products(capsys):
+    from app.ui import display_deleted_products
+    from app.models import Product
+    products = [Product(1, "Laptop", 850000, 5), Product(2, "Mouse", 25000, 10),]
+    display_deleted_products(products)
+    captured = capsys.readouterr()
+    assert "DELETED PRODUCTS HISTORY" in captured.out
+    assert "Laptop" in captured.out
+    assert "Mouse" in captured.out
+    assert "₦850,000.00" in captured.out
+    assert "₦25,000.00" in captured.out
+def test_display_deleted_products_empty(capsys):
+    from app.ui import display_deleted_products
+    display_deleted_products([])
+    captured = capsys.readouterr()
+    assert "DELETED PRODUCTS HISTORY" in captured.out
+    assert "No deleted products found" in captured.out

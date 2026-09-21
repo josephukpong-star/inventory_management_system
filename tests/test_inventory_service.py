@@ -1920,3 +1920,38 @@ def test_permanently_delete_product_not_found():
     with pytest.raises(ValueError, match="Removed product not found"):
         inventory.permanently_delete_product(1)
     assert product in inventory.get_all_products()
+def test_permanently_deleted_product_is_saved_in_deleted_history():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    inventory.permanently_delete_product(1)
+    assert product in inventory.deleted_products
+def test_multiple_permanently_deleted_products_are_saved_in_deleted_history():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product1 = Product(1, "Laptop", 850000, 5)
+    product2 = Product(2, "Mouse", 25000, 10)
+    inventory.add_product(product1)
+    inventory.add_product(product2)
+    inventory.remove_product(1)
+    inventory.remove_product(2)
+    inventory.permanently_delete_product(1)
+    inventory.permanently_delete_product(2)
+    assert product1 in inventory.deleted_products
+    assert product2 in inventory.deleted_products
+    assert len(inventory.deleted_products) == 2
+def test_get_deleted_products_returns_deleted_history():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    inventory.permanently_delete_product(1)
+    result = inventory.get_deleted_products()
+    assert result == [product]
+    assert result is not inventory.deleted_products

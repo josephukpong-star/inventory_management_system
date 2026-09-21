@@ -28,13 +28,14 @@ def display_menu():
     print("20. View Removed Products")
     print("21. Restore Product")
     print("22. Permanently Delete Product")
+    print("23. View Deleted Products History")
 def get_menu_choice():
     while True:
         try:
             choice = int(input("Choose an option: "))
-            if 1 <= choice <= 22:
+            if 1 <= choice <= 23:
                 return choice
-            print("Invalid choice. Please enter a number between 1 and 22.")
+            print("Invalid choice. Please enter a number between 1 and 23.")
         except ValueError:
             print("Invalid input. Please enter a number.")
 def get_stock_status(quantity, low_stock_threshold=5):
@@ -77,6 +78,18 @@ def display_removed_products(products):
         print(f"Price: {format_currency(product.price)}")
         print(f"Quantity: {product.quantity}")
         print(f"Category: {product.category}")
+def display_deleted_products(products):
+    print("\nDELETED PRODUCTS HISTORY")
+    if not products:
+        print("No deleted products found")
+        return
+    for product in products:
+        print(f"ID: {product.product_id}")
+        print(f"Name: {product.name}")
+        print(f"Price: {format_currency(product.price)}")
+        print(f"Quantity: {product.quantity}")
+        print(f"Category: {product.category}")
+        print("-" * 30)
 def get_product_input():
     while True:
         try:

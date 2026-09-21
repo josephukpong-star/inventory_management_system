@@ -14,6 +14,9 @@ def view_products(inventory):
 def view_removed_products(inventory):
     products = inventory.get_removed_products()
     ui.display_removed_products(products)
+def view_deleted_products(inventory):
+    products = inventory.get_deleted_products()
+    ui.display_deleted_products(products)
 def restore_product(inventory):
     product_id = ui.get_restore_product_id()
     inventory.restore_product(product_id)
@@ -132,6 +135,8 @@ def main(file_path="data/inventory.json"):
                 restore_product(inventory)
             elif choice == 22:
                 permanently_delete_product(inventory)
+            elif choice == 23:
+                view_deleted_products(inventory)
         except ValueError as error:
             print(f"Error: {error}")
         except FileNotFoundError:

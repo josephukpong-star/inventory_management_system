@@ -341,3 +341,24 @@ def test_main_permanently_delete_product_cancelled(monkeypatch, capsys):
     captured = capsys.readouterr()
     assert "Permanent deletion cancelled." in captured.out
     assert product in inventory.get_removed_products()
+def test_main_view_deleted_products(monkeypatch, capsys):
+    from app.main import view_deleted_products
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    inventory.permanently_delete_product(1)
+    monkeypatch.setattr("app.main.ui.display_deleted_products", lambda products: print( "DELETED PRODUCTS HISTORY" if products else "No deleted products found"))
+    view_deleted_products(inventory)
+    captured = capsys.readouterr()
+    assert "DELETED PRODUCTS HISTORY" in captured.out
+def test_main_view_deleted_products_empty(monkeypatch, capsys):
+    from app.main import view_deleted_products
+    from app.inventory_service import InventoryService
+    inventory = InventoryService()
+    monkeypatch.setattr("app.main.ui.display_deleted_products", lambda products: print("DELETED PRODUCTS HISTORY" if products else "No deleted products found"))
+    view_deleted_products(inventory)
+    captured = capsys.readouterr()
+    assert "No deleted products found" in captured.out
