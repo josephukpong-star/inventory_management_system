@@ -91,6 +91,7 @@ def display_deleted_products(deleted_records):
         print(f"Quantity: {product.quantity}")
         print(f"Category: {product.category}")
         print(f"Deleted At: {record['deleted_at']}")
+        print(f"Action: {record['action']}")
         print("-" * 30)
 def get_product_input():
     while True:

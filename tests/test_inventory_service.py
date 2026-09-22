@@ -1970,3 +1970,14 @@ def test_permanently_deleted_product_is_saved_in_deleted_history():
     deleted_record = inventory.deleted_products[0]
     assert deleted_record["product"] is product
     assert deleted_record["deleted_at"]
+def test_permanently_deleted_product_records_delete_action():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    inventory.permanently_delete_product(1)
+    deleted_record = inventory.deleted_products[0]
+    assert deleted_record["product"] is product
+    assert deleted_record["action"] == "PERMANENT_DELETE"
