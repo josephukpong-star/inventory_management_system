@@ -78,17 +78,19 @@ def display_removed_products(products):
         print(f"Price: {format_currency(product.price)}")
         print(f"Quantity: {product.quantity}")
         print(f"Category: {product.category}")
-def display_deleted_products(products):
+def display_deleted_products(deleted_records):
     print("\nDELETED PRODUCTS HISTORY")
-    if not products:
+    if not deleted_records:
         print("No deleted products found")
         return
-    for product in products:
+    for record in deleted_records:
+        product = record["product"]
         print(f"ID: {product.product_id}")
         print(f"Name: {product.name}")
         print(f"Price: {format_currency(product.price)}")
         print(f"Quantity: {product.quantity}")
         print(f"Category: {product.category}")
+        print(f"Deleted At: {record['deleted_at']}")
         print("-" * 30)
 def get_product_input():
     while True:

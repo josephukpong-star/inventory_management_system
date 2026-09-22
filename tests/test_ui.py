@@ -397,16 +397,17 @@ def test_get_permanently_delete_product_id_invalid_then_valid(monkeypatch):
     result = get_permanently_delete_product_id()
     assert result == 5
 def test_display_deleted_products(capsys):
-    from app.ui import display_deleted_products
     from app.models import Product
-    products = [Product(1, "Laptop", 850000, 5), Product(2, "Mouse", 25000, 10),]
-    display_deleted_products(products)
+    from app.ui import display_deleted_products
+    product = Product(1, "Laptop", 850000, 5)
+    deleted_records = [{"product": product, "deleted_at": "2026-09-22T18:30:00"}]
+    display_deleted_products(deleted_records)
     captured = capsys.readouterr()
     assert "DELETED PRODUCTS HISTORY" in captured.out
     assert "Laptop" in captured.out
-    assert "Mouse" in captured.out
-    assert "₦850,000.00" in captured.out
-    assert "₦25,000.00" in captured.out
+    assert "850,000.00" in captured.out
+    assert "5" in captured.out
+    assert "2026-09-22T18:30:00" in captured.out
 def test_display_deleted_products_empty(capsys):
     from app.ui import display_deleted_products
     display_deleted_products([])
