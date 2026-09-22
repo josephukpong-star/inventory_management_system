@@ -1942,8 +1942,14 @@ def test_multiple_permanently_deleted_products_are_saved_in_deleted_history():
     inventory.permanently_delete_product(1)
     inventory.permanently_delete_product(2)
     assert len(inventory.deleted_products) == 2
-    assert inventory.deleted_products[0]["product"] is product1
-    assert inventory.deleted_products[1]["product"] is product2
+    assert inventory.deleted_products[0]["product"]["product_id"] == 1
+    assert inventory.deleted_products[0]["product"]["name"] == "Laptop"
+    assert inventory.deleted_products[0]["product"]["price"] == 850000
+    assert inventory.deleted_products[0]["product"]["quantity"] == 5
+    assert inventory.deleted_products[1]["product"]["product_id"] == 2
+    assert inventory.deleted_products[1]["product"]["name"] == "Mouse"
+    assert inventory.deleted_products[1]["product"]["price"] == 15000
+    assert inventory.deleted_products[1]["product"]["quantity"] == 2
     assert inventory.deleted_products[0]["deleted_at"]
     assert inventory.deleted_products[1]["deleted_at"]
 def test_get_deleted_products_returns_deleted_history():
@@ -1957,7 +1963,11 @@ def test_get_deleted_products_returns_deleted_history():
     result = inventory.get_deleted_products()
     assert result == inventory.deleted_products
     assert result is not inventory.deleted_products
-    assert result[0]["product"] is product
+    assert result[0]["product"]["product_id"] == 1
+    assert result[0]["product"]["name"] == "Laptop"
+    assert result[0]["product"]["price"] == 850000
+    assert result[0]["product"]["quantity"] == 5
+    assert result[0]["product"]["category"] == "Uncategorized"
     assert result[0]["deleted_at"]
 def test_permanently_deleted_product_is_saved_in_deleted_history():
     from app.inventory_service import InventoryService
@@ -1968,7 +1978,11 @@ def test_permanently_deleted_product_is_saved_in_deleted_history():
     inventory.remove_product(1)
     inventory.permanently_delete_product(1)
     deleted_record = inventory.deleted_products[0]
-    assert deleted_record["product"] is product
+    assert deleted_record["product"]["product_id"] == 1
+    assert deleted_record["product"]["name"] == "Laptop"
+    assert deleted_record["product"]["price"] == 850000
+    assert deleted_record["product"]["quantity"] == 5
+    assert deleted_record["product"]["category"] == "Uncategorized"
     assert deleted_record["deleted_at"]
 def test_permanently_deleted_product_records_delete_action():
     from app.inventory_service import InventoryService
@@ -1979,5 +1993,23 @@ def test_permanently_deleted_product_records_delete_action():
     inventory.remove_product(1)
     inventory.permanently_delete_product(1)
     deleted_record = inventory.deleted_products[0]
-    assert deleted_record["product"] is product
+    assert deleted_record["product"]["product_id"] == 1
+    assert deleted_record["product"]["name"] == "Laptop"
+    assert deleted_record["product"]["price"] == 850000
+    assert deleted_record["product"]["quantity"] == 5
     assert deleted_record["action"] == "PERMANENT_DELETE"
+def test_permanently_deleted_product_records_product_snapshot():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5, "Electronics")
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    inventory.permanently_delete_product(1)
+    deleted_record = inventory.deleted_products[0]
+    snapshot = deleted_record["product"]
+    assert snapshot["product_id"] == 1
+    assert snapshot["name"] == "Laptop"
+    assert snapshot["price"] == 850000
+    assert snapshot["quantity"] == 5
+    assert snapshot["category"] == "Electronics"

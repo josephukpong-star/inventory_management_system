@@ -100,9 +100,9 @@ class InventoryService:
         for product in self.removed_products:
             if product.product_id == product_id:
                 self.removed_products.remove(product)
-                deleted_record = {"product": product, "deleted_at": datetime.now().isoformat(), "action": "PERMANENT_DELETE"}
-            self.deleted_products.append(deleted_record)
-            return
+                deleted_record = {"product": product.to_dict(), "deleted_at": datetime.now().isoformat(), "action": "PERMANENT_DELETE"}
+                self.deleted_products.append(deleted_record)
+                return
         raise ValueError("Removed product not found")
     def calculate_total_value(self):
         total = 0

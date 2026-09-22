@@ -400,7 +400,7 @@ def test_display_deleted_products(capsys):
     from app.models import Product
     from app.ui import display_deleted_products
     product = Product(1, "Laptop", 850000, 5)
-    deleted_records = [{"product": product, "deleted_at": "2026-09-22T18:30:00", "action": "PERMANENT_DELETE"}]
+    deleted_records = [{"product": {"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Electronics"}, "deleted_at": "2026-09-22T18:30:00", "action": "PERMANENT_DELETE"}]
     display_deleted_products(deleted_records)
     captured = capsys.readouterr()
     assert "DELETED PRODUCTS HISTORY" in captured.out

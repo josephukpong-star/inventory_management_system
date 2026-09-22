@@ -85,11 +85,11 @@ def display_deleted_products(deleted_records):
         return
     for record in deleted_records:
         product = record["product"]
-        print(f"ID: {product.product_id}")
-        print(f"Name: {product.name}")
-        print(f"Price: {format_currency(product.price)}")
-        print(f"Quantity: {product.quantity}")
-        print(f"Category: {product.category}")
+        print(f"ID: {product['product_id']}")
+        print(f"Name: {product['name']}")
+        print(f"Price: {format_currency(product['price'])}")
+        print(f"Quantity: {product['quantity']}")
+        print(f"Category: {product['category']}")
         print(f"Deleted At: {record['deleted_at']}")
         print(f"Action: {record['action']}")
         print("-" * 30)
