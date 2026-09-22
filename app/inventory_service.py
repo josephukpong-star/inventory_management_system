@@ -7,6 +7,7 @@ class InventoryService:
         self.transactions = []
         self.removed_products = []
         self.deleted_products = []
+        self.deleted_record_counter = 0
     def _validate_low_stock_threshold(self, low_stock_threshold):
         if isinstance(low_stock_threshold, bool) or not isinstance(low_stock_threshold, int):
             raise ValueError("Low stock threshold must be an integer")
@@ -100,7 +101,8 @@ class InventoryService:
         for product in self.removed_products:
             if product.product_id == product_id:
                 self.removed_products.remove(product)
-                deleted_record = {"product": product.to_dict(), "deleted_at": datetime.now().isoformat(), "action": "PERMANENT_DELETE"}
+                self.deleted_record_counter += 1
+                deleted_record = {"record_id": self.deleted_record_counter, "product": product.to_dict(), "deleted_at": datetime.now().isoformat(), "action": "PERMANENT_DELETE"}   
                 self.deleted_products.append(deleted_record)
                 return
         raise ValueError("Removed product not found")

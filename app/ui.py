@@ -84,6 +84,7 @@ def display_deleted_products(deleted_records):
         print("No deleted products found")
         return
     for record in deleted_records:
+        print(f"Record ID: {record['record_id']}")
         product = record["product"]
         print(f"ID: {product['product_id']}")
         print(f"Name: {product['name']}")

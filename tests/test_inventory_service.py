@@ -2013,3 +2013,39 @@ def test_permanently_deleted_product_records_product_snapshot():
     assert snapshot["price"] == 850000
     assert snapshot["quantity"] == 5
     assert snapshot["category"] == "Electronics"
+def test_permanently_deleted_product_records_unique_record_id():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product1 = Product(1, "Laptop", 850000, 5)
+    product2 = Product(2, "Mouse", 15000, 2)
+    inventory.add_product(product1)
+    inventory.add_product(product2)
+    inventory.remove_product(1)
+    inventory.remove_product(2)
+    inventory.permanently_delete_product(1)
+    inventory.permanently_delete_product(2)
+    first_record = inventory.deleted_products[0]
+    second_record = inventory.deleted_products[1]
+    assert first_record["record_id"] == 1
+    assert second_record["record_id"] == 2
+    assert first_record["record_id"] != second_record["record_id"]
+def test_deleted_record_id_continues_after_multiple_deletions():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product1 = Product(1, "Laptop", 850000, 5)
+    product2 = Product(2, "Mouse", 15000, 2)
+    product3 = Product(3, "Keyboard", 25000, 3)
+    inventory.add_product(product1)
+    inventory.add_product(product2)
+    inventory.add_product(product3)
+    inventory.remove_product(1)
+    inventory.remove_product(2)
+    inventory.remove_product(3)
+    inventory.permanently_delete_product(1)
+    inventory.permanently_delete_product(2)
+    inventory.permanently_delete_product(3)
+    assert inventory.deleted_products[0]["record_id"] == 1
+    assert inventory.deleted_products[1]["record_id"] == 2
+    assert inventory.deleted_products[2]["record_id"] == 3
