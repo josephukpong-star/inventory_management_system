@@ -138,6 +138,60 @@ def test_save_and_load_inventory(tmp_path):
     assert len(loaded_products) == 2
     assert loaded_products[0].name == "Laptop"
     assert loaded_products[1].name == "Mouse"
+def test_removed_products_survive_save_and_load(tmp_path):
+    file_path = tmp_path / "inventory.json"
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5, "Electronics")
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    inventory.save_inventory(file_path)
+    loaded_inventory = InventoryService()
+    loaded_inventory.load_inventory(file_path)
+    assert loaded_inventory.products == []
+    assert len(loaded_inventory.removed_products) == 1
+    assert loaded_inventory.removed_products[0].product_id == 1
+    assert loaded_inventory.removed_products[0].name == "Laptop"
+    assert loaded_inventory.removed_products[0].category == "Electronics"
+def test_deleted_products_history_survives_save_and_load(tmp_path):
+    file_path = tmp_path / "inventory.json"
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5, "Electronics")
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    inventory.permanently_delete_product(1)
+    inventory.save_inventory(file_path)
+    loaded_inventory = InventoryService()
+    loaded_inventory.load_inventory(file_path)
+    assert loaded_inventory.products == []
+    assert loaded_inventory.removed_products == []
+    assert len(loaded_inventory.deleted_products) == 1
+    deleted_record = loaded_inventory.deleted_products[0]
+    assert deleted_record["record_id"] == 1
+    assert deleted_record["product"]["product_id"] == 1
+    assert deleted_record["product"]["name"] == "Laptop"
+    assert deleted_record["product"]["category"] == "Electronics"
+    assert deleted_record["action"] == "PERMANENT_DELETE"
+def test_deleted_record_counter_survives_save_and_load(tmp_path):
+    file_path = tmp_path / "inventory.json"
+    inventory = InventoryService()
+    product1 = Product(1, "Laptop", 850000, 5, "Electronics")
+    product2 = Product(2, "Mouse", 15000, 10, "Accessories")
+    product3 = Product(3, "Keyboard", 25000, 8, "Accessories")
+    inventory.add_product(product1)
+    inventory.add_product(product2)
+    inventory.add_product(product3)
+    inventory.remove_product(1)
+    inventory.permanently_delete_product(1)
+    inventory.remove_product(2)
+    inventory.permanently_delete_product(2)
+    inventory.save_inventory(file_path)
+    loaded_inventory = InventoryService()
+    loaded_inventory.load_inventory(file_path)
+    assert loaded_inventory.deleted_record_counter == 2
+    loaded_inventory.remove_product(3)
+    loaded_inventory.permanently_delete_product(3)
+    assert loaded_inventory.deleted_record_counter == 3
+    assert loaded_inventory.deleted_products[-1]["record_id"] == 3
 def test_inventory_save_inventory(tmp_path):
     file_path = tmp_path / "products.json"
     inventory = InventoryService()

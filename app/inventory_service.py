@@ -27,9 +27,8 @@ class InventoryService:
         stock_in_transactions, stock_out_transactions = self._get_transaction_groups()
         return {"total_stock_in_value": sum(transaction["total_value"] for transaction in stock_in_transactions), "total_stock_out_value": sum(transaction["total_value"] for transaction in stock_out_transactions),}
     def save_inventory(self, file_path):
-        save_inventory_data(self.products, self.transactions, file_path)
-    def load_inventory(self, file_path):
-        self.products, self.transactions = load_inventory_data(file_path)
+        save_inventory_data(self.products, self.transactions, file_path, self.removed_products, self.deleted_products, self.deleted_record_counter,)
+    def load_inventory(self, file_path):(self.products, self.transactions, self.removed_products, self.deleted_products, self.deleted_record_counter,) = load_inventory_data(file_path, return_full_state=True)
     def add_product(self, product):
         for existing_product in self.products:
             if existing_product.product_id == product.product_id:
