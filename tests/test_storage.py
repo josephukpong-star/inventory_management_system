@@ -51,6 +51,13 @@ def test_save_and_load_inventory_data(tmp_path):
     assert loaded_transactions[0]["type"] == "STOCK-IN"
     assert loaded_transactions[0]["quantity"] == 5
     assert loaded_transactions[0]["total_value"] == 4250000
+
+def test_save_and_load_empty_inventory_data(tmp_path):
+    file_path = tmp_path / "empty_inventory.json"
+    save_inventory_data([], [], file_path)
+    loaded_products, loaded_transactions = load_inventory_data(file_path)
+    assert loaded_products == []
+    assert loaded_transactions == []
 def test_save_inventory_report(tmp_path):
     report = """INVENTORY REPORT
 Total Products: 2
