@@ -135,7 +135,7 @@ pip install -r requirements.txt
 ### 5. Run the application
 
 ```bash
-python main.py
+python -m app.main
 ```
 
 The application will start the Inventory Management System command-line interface.
@@ -145,7 +145,7 @@ The application will start the Inventory Management System command-line interfac
 After completing the installation steps, start the application with:
 
 ```bash
-python main.py
+python -m app.main
 ```
 
 The application displays an interactive command-line menu with the following options:
