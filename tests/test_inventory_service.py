@@ -2003,6 +2003,18 @@ def test_permanently_delete_product_not_found():
     with pytest.raises(ValueError, match="Removed product not found"):
         inventory.permanently_delete_product(1)
     assert product in inventory.get_all_products()
+def test_permanently_delete_product_twice_rejects_second_attempt():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 5)
+    inventory.add_product(product)
+    inventory.remove_product(1)
+    inventory.permanently_delete_product(1)
+    with pytest.raises(ValueError, match="Removed product not found"):
+        inventory.permanently_delete_product(1)
+    assert len(inventory.deleted_products) == 1
+    assert inventory.deleted_products[0]["record_id"] == 1
 def test_permanently_deleted_product_is_saved_in_deleted_history():
     from app.inventory_service import InventoryService
     from app.models import Product
