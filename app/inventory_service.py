@@ -92,6 +92,9 @@ class InventoryService:
     def restore_product(self, product_id):
         for product in self.removed_products:
             if product.product_id == product_id:
+                for existing_product in self.products:
+                    if existing_product.product_id == product_id:
+                        raise ValueError("Product ID already exists")
                 self.removed_products.remove(product)
                 self.products.append(product)
                 return
@@ -111,6 +114,7 @@ class InventoryService:
             total += product.price * product.quantity
         return total
     def get_low_stock_products(self, threshold=5):
+        self._validate_low_stock_threshold(threshold)
         return [product for product in self.products if 0 < product.quantity <= threshold]
     def get_out_of_stock_products(self):
         return [product for product in self.products if product.quantity == 0]

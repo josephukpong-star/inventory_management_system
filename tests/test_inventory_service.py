@@ -85,6 +85,18 @@ def test_get_low_stock_products():
     assert len(low_stock_products) == 2
     assert product1 in low_stock_products
     assert product3 in low_stock_products
+def test_get_low_stock_products_rejects_negative_threshold():
+    inventory = InventoryService()
+    with pytest.raises(ValueError, match="Low stock threshold cannot be negative"):
+        inventory.get_low_stock_products(-1)
+def test_get_low_stock_products_rejects_non_integer_threshold():
+    inventory = InventoryService()
+    with pytest.raises(ValueError, match="Low stock threshold must be an integer"):
+        inventory.get_low_stock_products("5")
+def test_get_low_stock_products_rejects_boolean_threshold():
+    inventory = InventoryService()
+    with pytest.raises(ValueError, match="Low stock threshold must be an integer"):
+        inventory.get_low_stock_products(True)
 def test_get_low_stock_products_empty():
     inventory = InventoryService()
     low_stock_products = inventory.get_low_stock_products(5)
@@ -1361,6 +1373,10 @@ def test_get_top_products_by_inventory_value_rejects_non_integer_limit():
     inventory = InventoryService()
     with pytest.raises(ValueError, match="Limit must be an integer"):
         inventory.get_top_products_by_inventory_value(2.5)
+def test_get_top_products_by_inventory_value_rejects_boolean_limit():
+    inventory = InventoryService()
+    with pytest.raises(ValueError, match="Limit must be an integer"):
+        inventory.get_top_products_by_inventory_value(True)
 def test_get_categories_by_inventory_value():
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 850000, 2, "Electronics"))
@@ -1946,6 +1962,19 @@ def test_restore_product_not_found():
     inventory = InventoryService()
     with pytest.raises(ValueError, match="Removed product not found"):
         inventory.restore_product(999)
+def test_restore_product_rejects_duplicate_active_product_id():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    removed_product = Product(1, "Laptop", 850000, 5)
+    active_product = Product(1, "Mouse", 15000, 2)
+    inventory.add_product(removed_product)
+    inventory.remove_product(1)
+    inventory.add_product(active_product)
+    with pytest.raises(ValueError, match="Product ID already exists"):
+        inventory.restore_product(1)
+    assert active_product in inventory.get_all_products()
+    assert removed_product in inventory.removed_products
 def test_get_removed_products_returns_removed_products():
     from app.inventory_service import InventoryService
     from app.models import Product
