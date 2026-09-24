@@ -1975,6 +1975,7 @@ def test_restore_product_rejects_duplicate_active_product_id():
         inventory.restore_product(1)
     assert active_product in inventory.get_all_products()
     assert removed_product in inventory.removed_products
+
 def test_get_removed_products_returns_removed_products():
     from app.inventory_service import InventoryService
     from app.models import Product
@@ -1984,6 +1985,21 @@ def test_get_removed_products_returns_removed_products():
     inventory.remove_product(1)
     removed_products = inventory.get_removed_products()
     assert removed_products == [product]
+
+def test_add_product_allows_id_reuse_after_product_is_removed():
+    from app.inventory_service import InventoryService
+    from app.models import Product
+    inventory = InventoryService()
+    original_product = Product(1, "Laptop", 850000, 5)
+    replacement_product = Product(1, "Mouse", 15000, 2)
+
+    inventory.add_product(original_product)
+    inventory.remove_product(1)
+
+    inventory.add_product(replacement_product)
+
+    assert inventory.get_all_products() == [replacement_product]
+    assert inventory.get_removed_products() == [original_product]
 def test_permanently_delete_removed_product():
     from app.inventory_service import InventoryService
     from app.models import Product
