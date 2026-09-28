@@ -1,7 +1,7 @@
 ﻿import json
 import pytest
 from app.models import Product
-from app.storage import (save_products, load_products, save_inventory_data, load_inventory_data, save_inventory_report, backup_inventory_data, restore_inventory_data,)
+from app.storage import (save_products, load_products, save_inventory_data, load_inventory_data, save_inventory_report, backup_inventory_data, create_inventory_backup, restore_inventory_data,)
 def test_save_products(tmp_path):
     products = [Product(1, "Laptop", 850000, 5), Product(2, "Mouse", 15000, 10),]
     file_path = tmp_path / "products.json"
@@ -191,3 +191,46 @@ def test_restore_inventory_data_does_not_modify_backup(tmp_path):
     backup_file.write_text(json.dumps(backup_data))
     restore_inventory_data(str(backup_file), str(inventory_file),)
     assert json.loads(backup_file.read_text()) == backup_data
+def test_create_inventory_backup(tmp_path):
+    source_file = tmp_path / "inventory.json"
+    backup_directory = tmp_path / "backups"
+    products = [Product(1, "Laptop", 850000, 5, "Electronics")]
+    transactions = [{"product_id": 1, "product_name": "Laptop", "type": "STOCK-IN", "quantity": 5, "price": 850000, "total_value": 4250000, "timestamp": "2026-09-08T21:30:00",}]
+    save_inventory_data(products, transactions, source_file)
+    backup_file = create_inventory_backup(source_file, backup_directory,)
+    assert backup_file.exists()
+    assert backup_file.parent == backup_directory
+    assert backup_file.name.startswith("inventory_backup_")
+    assert backup_file.suffix == ".json"
+    with open(backup_file, "r") as file:
+        backup_data = json.load(file)
+    assert backup_data["products"][0]["product_id"] == 1
+    assert backup_data["products"][0]["name"] == "Laptop"
+    assert backup_data["products"][0]["category"] == "Electronics"
+    assert backup_data["transactions"][0]["type"] == "STOCK-IN"
+def test_create_inventory_backup_source_file_not_found(tmp_path):
+    source_file = tmp_path / "missing_inventory.json"
+    backup_directory = tmp_path / "backups"
+    with pytest.raises(FileNotFoundError):
+        create_inventory_backup(source_file, backup_directory)
+def test_create_inventory_backup_invalid_json(tmp_path):
+    source_file = tmp_path / "inventory.json"
+    backup_directory = tmp_path / "backups"
+    source_file.write_text("invalid json")
+    with pytest.raises(json.JSONDecodeError):
+        create_inventory_backup(source_file, backup_directory)
+def test_create_inventory_backup_creates_multiple_backups(tmp_path):
+    source_file = tmp_path / "inventory.json"
+    backup_directory = tmp_path / "backups"
+    products = [Product(1, "Laptop", 850000, 5, "Electronics")]
+    transactions = []
+    save_inventory_data(products, transactions, source_file)
+    first_backup = create_inventory_backup(source_file, backup_directory,)
+    products[0].quantity = 10
+    save_inventory_data(products, transactions, source_file)
+    second_backup = create_inventory_backup(source_file, backup_directory,)
+    assert first_backup.exists()
+    assert second_backup.exists()
+    assert first_backup != second_backup
+    backup_files = list(backup_directory.glob("inventory_backup_*.json"))
+    assert len(backup_files) == 2

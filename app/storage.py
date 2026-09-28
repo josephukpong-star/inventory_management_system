@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from app.models import Product
 def _product_from_dict(item):
     return Product(item["product_id"], item["name"], item["price"], item["quantity"], item.get("category", "Uncategorized"))
@@ -53,9 +54,17 @@ def load_inventory_data(file_path, return_full_state=False):
 def backup_inventory_data(source_file_path, backup_file_path):
     with open(source_file_path, "r") as source_file:
         data = json.load(source_file)
-
     with open(backup_file_path, "w") as backup_file:
         json.dump(data, backup_file, indent=4)
+
+def create_inventory_backup(source_file_path, backup_directory):
+    from datetime import datetime
+    import os
+    os.makedirs(backup_directory, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")
+    backup_file_path = os.path.join(backup_directory, f"inventory_backup_{timestamp}.json",)
+    backup_inventory_data(source_file_path, backup_file_path)
+    return Path(backup_file_path)
 
 def restore_inventory_data(backup_file_path, source_file_path):
     with open(backup_file_path, "r") as backup_file:
