@@ -22,7 +22,7 @@ def test_get_menu_choice_valid(monkeypatch):
     assert result == 3
 def test_get_menu_choice_invalid_then_valid(monkeypatch):
     from app.ui import get_menu_choice
-    inputs = iter(["abc", "24", "19"])
+    inputs = iter(["abc", "25", "19"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
     result = get_menu_choice()
     assert result == 19

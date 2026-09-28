@@ -29,6 +29,10 @@ class InventoryService:
     def save_inventory(self, file_path):
         save_inventory_data(self.products, self.transactions, file_path, self.removed_products, self.deleted_products, self.deleted_record_counter,)
     def load_inventory(self, file_path):(self.products, self.transactions, self.removed_products, self.deleted_products, self.deleted_record_counter,) = load_inventory_data(file_path, return_full_state=True)
+    def restore_inventory(self, backup_file_path, file_path):
+        from app.storage import restore_inventory_data
+        restore_inventory_data(backup_file_path, file_path)
+        self.load_inventory(file_path)
     def add_product(self, product):
         for existing_product in self.products:
             if existing_product.product_id == product.product_id:

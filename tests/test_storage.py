@@ -1,7 +1,7 @@
 ﻿import json
 import pytest
 from app.models import Product
-from app.storage import (save_products, load_products, save_inventory_data, load_inventory_data, save_inventory_report, backup_inventory_data,)
+from app.storage import (save_products, load_products, save_inventory_data, load_inventory_data, save_inventory_report, backup_inventory_data, restore_inventory_data,)
 def test_save_products(tmp_path):
     products = [Product(1, "Laptop", 850000, 5), Product(2, "Mouse", 15000, 10),]
     file_path = tmp_path / "products.json"
@@ -178,3 +178,29 @@ def test_backup_inventory_data_is_independent(tmp_path):
     with open(backup_file, "r") as file:
         backup_data = json.load(file)
     assert backup_data["products"][0]["quantity"] == 5
+def test_restore_inventory_data(tmp_path):
+    backup_file = tmp_path / "inventory_backup.json"
+    inventory_file = tmp_path / "inventory.json"
+    backup_data = {"products": [{"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Electronics",}], "transactions": [], "removed_products": [], "deleted_products": [], "deleted_record_counter": 0,}
+    backup_file.write_text(json.dumps(backup_data))
+    restore_inventory_data(str(backup_file), str(inventory_file),)
+    restored_data = json.loads(inventory_file.read_text())
+    assert restored_data == backup_data
+def test_restore_inventory_data_backup_file_not_found(tmp_path):
+    backup_file = tmp_path / "missing_backup.json"
+    inventory_file = tmp_path / "inventory.json"
+    with pytest.raises(FileNotFoundError):
+        restore_inventory_data(str(backup_file), str(inventory_file),)
+def test_restore_inventory_data_invalid_json(tmp_path):
+    backup_file = tmp_path / "inventory_backup.json"
+    inventory_file = tmp_path / "inventory.json"
+    backup_file.write_text("{invalid json")
+    with pytest.raises(json.JSONDecodeError):
+        restore_inventory_data(str(backup_file), str(inventory_file),)
+def test_restore_inventory_data_does_not_modify_backup(tmp_path):
+    backup_file = tmp_path / "inventory_backup.json"
+    inventory_file = tmp_path / "inventory.json"
+    backup_data = {"products": [{"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Electronics",}], "transactions": [], "removed_products": [], "deleted_products": [], "deleted_record_counter": 0,}
+    backup_file.write_text(json.dumps(backup_data))
+    restore_inventory_data(str(backup_file), str(inventory_file),)
+    assert json.loads(backup_file.read_text()) == backup_data

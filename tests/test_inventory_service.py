@@ -1,4 +1,5 @@
 import pytest
+import json
 from app.models import Product
 from app.inventory_service import InventoryService
 from app.storage import save_products, load_products
@@ -2160,3 +2161,38 @@ def test_deleted_record_id_continues_after_multiple_deletions():
     assert inventory.deleted_products[0]["record_id"] == 1
     assert inventory.deleted_products[1]["record_id"] == 2
     assert inventory.deleted_products[2]["record_id"] == 3
+def test_restore_inventory_restores_backup_state(tmp_path):
+    backup_file = tmp_path / "inventory_backup.json"
+    inventory_file = tmp_path / "inventory.json"
+    backup_data = {"products": [{"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Electronics",}], "transactions": [], "removed_products": [], "deleted_products": [], "deleted_record_counter": 0,}
+    backup_file.write_text(json.dumps(backup_data))
+    inventory = InventoryService()
+    inventory.add_product(Product(2, "Mouse", 15000, 2, "Accessories"))
+    inventory.save_inventory(inventory_file)
+    inventory.restore_inventory(backup_file, inventory_file,)
+    products = inventory.get_all_products()
+    assert len(products) == 1
+    assert products[0].product_id == 1
+    assert products[0].name == "Laptop"
+    assert products[0].price == 850000
+    assert products[0].quantity == 5
+    assert products[0].category == "Electronics"
+def test_restore_inventory_loads_transactions_from_backup(tmp_path):
+    backup_file = tmp_path / "inventory_backup.json"
+    inventory_file = tmp_path / "inventory.json"
+    backup_data = {"products": [{"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 10, "category": "Electronics",}], "transactions": [{"product_id": 1, "product_name": "Laptop", "price": 850000, "type": "STOCK-IN", "quantity": 5, "total_value": 4250000, "timestamp": "2026-01-01T10:00:00",}], "removed_products": [], "deleted_products": [], "deleted_record_counter": 0,}
+    backup_file.write_text(json.dumps(backup_data))
+    inventory = InventoryService()
+    inventory.restore_inventory(backup_file, inventory_file,)
+    transactions = inventory.get_transactions()
+    assert len(transactions) == 1
+    assert transactions[0]["product_id"] == 1
+    assert transactions[0]["type"] == "STOCK-IN"
+    assert transactions[0]["quantity"] == 5
+    assert transactions[0]["total_value"] == 4250000
+def test_restore_inventory_backup_file_not_found(tmp_path):
+    backup_file = tmp_path / "missing_backup.json"
+    inventory_file = tmp_path / "inventory.json"
+    inventory = InventoryService()
+    with pytest.raises(FileNotFoundError):
+        inventory.restore_inventory(backup_file, inventory_file,)

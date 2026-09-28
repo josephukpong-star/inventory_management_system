@@ -53,5 +53,13 @@ def load_inventory_data(file_path, return_full_state=False):
 def backup_inventory_data(source_file_path, backup_file_path):
     with open(source_file_path, "r") as source_file:
         data = json.load(source_file)
+
     with open(backup_file_path, "w") as backup_file:
         json.dump(data, backup_file, indent=4)
+
+def restore_inventory_data(backup_file_path, source_file_path):
+    with open(backup_file_path, "r") as backup_file:
+        data = json.load(backup_file)
+
+    with open(source_file_path, "w") as source_file:
+        json.dump(data, source_file, indent=4)

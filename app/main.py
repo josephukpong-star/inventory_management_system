@@ -64,6 +64,9 @@ def save_inventory(inventory, file_path, backup_file_path):
 def load_inventory(inventory, file_path):
     inventory.load_inventory(file_path)
     print("Inventory loaded successfully.")
+def restore_inventory(inventory, backup_file_path, file_path):
+    inventory.restore_inventory(backup_file_path, file_path)
+    print("Inventory backup restored successfully.")
 def show_category_summary(inventory):
     summary = inventory.get_category_summary()
     ui.display_category_summary(summary)
@@ -141,6 +144,8 @@ def main(file_path="data/inventory.json", backup_file_path="data/inventory_backu
                 permanently_delete_product(inventory)
             elif choice == 23:
                 view_deleted_products(inventory)
+            elif choice == 24:
+                restore_inventory(inventory, backup_file_path, file_path)
         except ValueError as error:
             print(f"Error: {error}")
         except FileNotFoundError:
