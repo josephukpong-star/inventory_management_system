@@ -66,6 +66,20 @@ def create_inventory_backup(source_file_path, backup_directory):
     backup_inventory_data(source_file_path, backup_file_path)
     return Path(backup_file_path)
 
+def list_inventory_backups(backup_directory):
+    backup_directory = Path(backup_directory)
+    if not backup_directory.exists():
+        return []
+    return sorted(backup_directory.glob("inventory_backup_*.json"), reverse=True,)
+def restore_inventory_backup(backup_file_path, source_file_path):
+    backup_file_path = Path(backup_file_path)
+    source_file_path = Path(source_file_path)
+    if not backup_file_path.exists():
+        raise FileNotFoundError(backup_file_path)
+    with open(backup_file_path, "r") as backup_file:
+        data = json.load(backup_file)
+    with open(source_file_path, "w") as source_file:
+        json.dump(data, source_file, indent=4)
 def restore_inventory_data(backup_file_path, source_file_path):
     with open(backup_file_path, "r") as backup_file:
         data = json.load(backup_file)

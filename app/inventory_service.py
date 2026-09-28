@@ -33,6 +33,10 @@ class InventoryService:
         from app.storage import restore_inventory_data
         restore_inventory_data(backup_file_path, file_path)
         self.load_inventory(file_path)
+    def restore_inventory_backup(self, backup_file_path, file_path):
+        from app.storage import restore_inventory_backup
+        restore_inventory_backup(backup_file_path, file_path)
+        self.load_inventory(file_path)
     def add_product(self, product):
         for existing_product in self.products:
             if existing_product.product_id == product.product_id:

@@ -2196,3 +2196,21 @@ def test_restore_inventory_backup_file_not_found(tmp_path):
     inventory = InventoryService()
     with pytest.raises(FileNotFoundError):
         inventory.restore_inventory(backup_file, inventory_file,)
+def test_restore_inventory_backup(tmp_path):
+    backup_file = tmp_path / "inventory_backup.json"
+    inventory_file = tmp_path / "inventory.json"
+    backup_data = [{"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Electronics",}]
+    backup_file.write_text(json.dumps(backup_data, indent=4))
+    service = InventoryService()
+    service.restore_inventory_backup(backup_file, inventory_file,)
+    assert len(service.products) == 1
+    assert service.products[0].name == "Laptop"
+    assert service.products[0].price == 850000
+    assert service.products[0].quantity == 5
+    assert service.products[0].category == "Electronics"
+def test_restore_inventory_backup_file_not_found(tmp_path):
+    backup_file = tmp_path / "missing_backup.json"
+    inventory_file = tmp_path / "inventory.json"
+    service = InventoryService()
+    with pytest.raises(FileNotFoundError):
+        service.restore_inventory_backup( backup_file, inventory_file,)

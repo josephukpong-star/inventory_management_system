@@ -208,6 +208,23 @@ def test_create_inventory_backup(tmp_path):
     assert backup_data["products"][0]["name"] == "Laptop"
     assert backup_data["products"][0]["category"] == "Electronics"
     assert backup_data["transactions"][0]["type"] == "STOCK-IN"
+def test_list_inventory_backups_returns_backups(tmp_path):
+    from app.storage import create_inventory_backup, list_inventory_backups
+    source_file = tmp_path / "inventory.json"
+    backup_directory = tmp_path / "backups"
+    source_file.write_text('[{"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5}]')
+    create_inventory_backup(source_file, backup_directory)
+    create_inventory_backup(source_file, backup_directory)
+    backups = list_inventory_backups(backup_directory)
+    assert len(backups) == 2
+    assert all(backup.name.startswith("inventory_backup_") for backup in backups)
+    assert all(backup.suffix == ".json" for backup in backups)
+
+def test_list_inventory_backups_returns_empty_list_when_directory_missing(tmp_path):
+    from app.storage import list_inventory_backups
+    backup_directory = tmp_path / "backups"
+    backups = list_inventory_backups(backup_directory)
+    assert backups == []
 def test_create_inventory_backup_source_file_not_found(tmp_path):
     source_file = tmp_path / "missing_inventory.json"
     backup_directory = tmp_path / "backups"
@@ -234,3 +251,19 @@ def test_create_inventory_backup_creates_multiple_backups(tmp_path):
     assert first_backup != second_backup
     backup_files = list(backup_directory.glob("inventory_backup_*.json"))
     assert len(backup_files) == 2
+def test_restore_inventory_backup(tmp_path):
+    from app.storage import restore_inventory_backup
+    backup_file = tmp_path / "inventory_backup.json"
+    source_file = tmp_path / "inventory.json"
+    backup_data = [{"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Electronics",}]
+    backup_file.write_text(json.dumps(backup_data, indent=4))
+    restore_inventory_backup(backup_file, source_file)
+    restored_data = json.loads(source_file.read_text())
+    assert restored_data == backup_data
+
+def test_restore_inventory_backup_file_not_found(tmp_path):
+    from app.storage import restore_inventory_backup
+    backup_file = tmp_path / "missing_backup.json"
+    source_file = tmp_path / "inventory.json"
+    with pytest.raises(FileNotFoundError):
+        restore_inventory_backup(backup_file, source_file)
