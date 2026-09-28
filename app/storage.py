@@ -49,3 +49,9 @@ def load_inventory_data(file_path, return_full_state=False):
     if return_full_state:
         return (products, transactions, removed_products, deleted_products, deleted_record_counter,)
     return products, transactions
+
+def backup_inventory_data(source_file_path, backup_file_path):
+    with open(source_file_path, "r") as source_file:
+        data = json.load(source_file)
+    with open(backup_file_path, "w") as backup_file:
+        json.dump(data, backup_file, indent=4)

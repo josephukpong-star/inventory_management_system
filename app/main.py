@@ -1,4 +1,6 @@
+import os
 from app.inventory_service import InventoryService
+from app.storage import backup_inventory_data
 from app import ui
 def add_product(inventory):
     product = ui.get_product_input()
@@ -54,7 +56,9 @@ def remove_product(inventory):
 def show_inventory_summary(inventory):
     summary = inventory.get_inventory_summary()
     ui.display_inventory_summary(summary)
-def save_inventory(inventory, file_path):
+def save_inventory(inventory, file_path, backup_file_path):
+    if os.path.exists(file_path):
+        backup_inventory_data(file_path, backup_file_path)
     inventory.save_inventory(file_path)
     print("Inventory saved successfully.")
 def load_inventory(inventory, file_path):
@@ -84,7 +88,7 @@ def show_dashboard(inventory):
 def show_inventory_alerts(inventory):
     alerts = inventory.get_inventory_alerts()
     ui.display_inventory_alerts(alerts)
-def main(file_path="data/inventory.json"):
+def main(file_path="data/inventory.json", backup_file_path="data/inventory_backup.json"):
     inventory = InventoryService()
     while True:
         ui.display_menu()
@@ -105,7 +109,7 @@ def main(file_path="data/inventory.json"):
             elif choice == 7:
                 show_inventory_summary(inventory)
             elif choice == 8:
-                save_inventory(inventory, file_path)
+                save_inventory(inventory, file_path, backup_file_path)
             elif choice == 9:
                 load_inventory(inventory, file_path)
             elif choice == 10:

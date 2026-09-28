@@ -1,6 +1,7 @@
 ﻿import json
+import pytest
 from app.models import Product
-from app.storage import (save_products, load_products, save_inventory_data, load_inventory_data, save_inventory_report,)
+from app.storage import (save_products, load_products, save_inventory_data, load_inventory_data, save_inventory_report, backup_inventory_data,)
 def test_save_products(tmp_path):
     products = [Product(1, "Laptop", 850000, 5), Product(2, "Mouse", 15000, 10),]
     file_path = tmp_path / "products.json"
@@ -125,3 +126,55 @@ def test_load_inventory_data_full_state_invalid_json(tmp_path):
     assert removed_products == []
     assert deleted_products == []
     assert deleted_record_counter == 0
+def test_backup_inventory_data(tmp_path):
+    source_file = tmp_path / "inventory.json"
+    backup_file = tmp_path / "backup_inventory.json"
+    products = [Product(1, "Laptop", 850000, 5, "Electronics")]
+    transactions = [{"product_id": 1, "product_name": "Laptop", "type": "STOCK-IN", "quantity": 5, "price": 850000, "total_value": 4250000, "timestamp": "2026-09-08T21:30:00",}]
+    save_inventory_data(products, transactions, source_file)
+    backup_inventory_data(source_file, backup_file)
+    with open(backup_file, "r") as file:
+        backup_data = json.load(file)
+    assert backup_data["products"][0]["product_id"] == 1
+    assert backup_data["products"][0]["name"] == "Laptop"
+    assert backup_data["products"][0]["category"] == "Electronics"
+    assert backup_data["transactions"][0]["type"] == "STOCK-IN"
+def test_backup_inventory_data(tmp_path):
+    source_file = tmp_path / "inventory.json"
+    backup_file = tmp_path / "backup_inventory.json"
+    products = [Product(1, "Laptop", 850000, 5, "Electronics")]
+    transactions = [{"product_id": 1, "product_name": "Laptop", "type": "STOCK-IN", "quantity": 5, "price": 850000, "total_value": 4250000, "timestamp": "2026-09-08T21:30:00",}]
+    save_inventory_data(products, transactions, source_file)
+    backup_inventory_data(source_file, backup_file)
+    with open(backup_file, "r") as file:
+        backup_data = json.load(file)
+    assert backup_data["products"][0]["product_id"] == 1
+    assert backup_data["products"][0]["name"] == "Laptop"
+    assert backup_data["products"][0]["category"] == "Electronics"
+    assert backup_data["transactions"][0]["type"] == "STOCK-IN"
+def test_backup_inventory_data_source_file_not_found(tmp_path):
+    source_file = tmp_path / "missing_inventory.json"
+    backup_file = tmp_path / "backup_inventory.json"
+    with pytest.raises(FileNotFoundError):
+        backup_inventory_data(source_file, backup_file)
+def test_backup_inventory_data_invalid_json(tmp_path):
+    source_file = tmp_path / "inventory.json"
+    backup_file = tmp_path / "backup_inventory.json"
+    with open(source_file, "w") as file:
+        file.write("invalid json")
+    with pytest.raises(json.JSONDecodeError):
+        backup_inventory_data(source_file, backup_file)
+def test_backup_inventory_data_is_independent(tmp_path):
+    source_file = tmp_path / "inventory.json"
+    backup_file = tmp_path / "backup_inventory.json"
+    products = [Product(1, "Laptop", 850000, 5, "Electronics")]
+    transactions = [{"product_id": 1, "product_name": "Laptop", "type": "STOCK-IN", "quantity": 5, "price": 850000, "total_value": 4250000, "timestamp": "2026-09-08T21:30:00",}]
+    save_inventory_data(products, transactions, source_file)
+    backup_inventory_data(source_file, backup_file)
+    # Change the original inventory file
+    products[0].quantity = 100
+    save_inventory_data(products, transactions, source_file)
+    # The backup must still contain the original quantity
+    with open(backup_file, "r") as file:
+        backup_data = json.load(file)
+    assert backup_data["products"][0]["quantity"] == 5

@@ -23,3 +23,6 @@ htmlcov/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Inventory runtime data and backups
+data/inventory_backup.json
