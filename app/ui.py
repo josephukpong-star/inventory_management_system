@@ -30,13 +30,15 @@ def display_menu():
     print("22. Permanently Delete Product")
     print("23. View Deleted Products History")
     print("24. Restore Inventory Backup")
+    print("25. View Inventory Backups")
+
 def get_menu_choice():
     while True:
         try:
             choice = int(input("Choose an option: "))
-            if 1 <= choice <= 24:
+            if 1 <= choice <= 25:
                 return choice
-            print("Invalid choice. Please enter a number between 1 and 24.")
+            print("Invalid choice. Please enter a number between 1 and 25.")
         except ValueError:
             print("Invalid input. Please enter a number.")
 def get_stock_status(quantity, low_stock_threshold=5):
@@ -300,3 +302,10 @@ def display_transaction_value_summary(summary):
     print(f"Total Stock-Out Value: " f"{format_currency(summary['total_stock_out_value'])}")
     print()
     print("========================================")
+def display_inventory_backups(backups):
+    if not backups:
+        print("No inventory backups available.")
+        return
+    print("\nAvailable Inventory Backups:")
+    for index, backup in enumerate(backups, start=1):
+        print(f"{index}. {backup.name}")
