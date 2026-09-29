@@ -1,6 +1,6 @@
 import os
 from app.inventory_service import InventoryService
-from app.storage import create_inventory_backup
+from app.storage import create_inventory_backup, list_inventory_backups
 from app import ui
 def add_product(inventory):
     product = ui.get_product_input()
@@ -19,6 +19,9 @@ def view_removed_products(inventory):
 def view_deleted_products(inventory):
     products = inventory.get_deleted_products()
     ui.display_deleted_products(products)
+def view_inventory_backups(backup_directory):
+    backups = list_inventory_backups(backup_directory)
+    ui.display_inventory_backups(backups)
 def restore_product(inventory):
     product_id = ui.get_restore_product_id()
     inventory.restore_product(product_id)
@@ -146,6 +149,8 @@ def main(file_path="data/inventory.json", backup_file_path="data/inventory_backu
                 view_deleted_products(inventory)
             elif choice == 24:
                 restore_inventory(inventory, backup_file_path, file_path)
+            elif choice == 25:
+                view_inventory_backups(backup_directory)
         except ValueError as error:
             print(f"Error: {error}")
         except FileNotFoundError:

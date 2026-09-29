@@ -362,3 +362,14 @@ def test_main_view_deleted_products_empty(monkeypatch, capsys):
     view_deleted_products(inventory)
     captured = capsys.readouterr()
     assert "No deleted products found" in captured.out
+def test_main_view_inventory_backups():
+    from app.main import main
+    backups = ["backup1.json", "backup2.json"]
+    with patch("app.ui.display_menu"), \
+         patch("app.ui.get_menu_choice", side_effect=[25, 15]), \
+         patch("app.main.list_inventory_backups", return_value=backups) as mock_list_backups, \
+         patch("app.ui.display_inventory_backups") as mock_display_backups, \
+         patch("builtins.print"):
+        main()
+    mock_list_backups.assert_called_once_with("data/backups")
+    mock_display_backups.assert_called_once_with(backups)
