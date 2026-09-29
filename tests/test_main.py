@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from pathlib import Path
 def test_main_exits():
     from app.main import main
     with patch("app.ui.display_menu"), \
@@ -373,3 +374,38 @@ def test_main_view_inventory_backups():
         main()
     mock_list_backups.assert_called_once_with("data/backups")
     mock_display_backups.assert_called_once_with(backups)
+def test_restore_selected_inventory_backup_no_backups():
+    from app.main import restore_selected_inventory_backup
+    from app.inventory_service import InventoryService
+    inventory = InventoryService()
+    with patch("app.main.list_inventory_backups", return_value=[],) as mock_list_backups, \
+         patch("app.ui.display_inventory_backups") as mock_display_backups:
+        restore_selected_inventory_backup(inventory, "data/backups", "data/inventory.json",)
+    mock_list_backups.assert_called_once_with("data/backups")
+    mock_display_backups.assert_called_once_with([])
+def test_restore_selected_inventory_backup_confirmed():
+    from app.main import restore_selected_inventory_backup
+    from app.inventory_service import InventoryService
+    inventory = InventoryService()
+    backups = [Path("data/backups/inventory_backup_2026-09-24_120000.json"), Path("data/backups/inventory_backup_2026-09-25_120000.json"),]
+    with patch("app.main.list_inventory_backups", return_value=backups,), \
+         patch("app.ui.display_inventory_backups"), \
+         patch("app.ui.get_backup_selection", return_value=1), \
+         patch("app.ui.get_confirmation", return_value=True), \
+         patch("app.main.restore_inventory_backup") as mock_restore:
+        restore_selected_inventory_backup(inventory, "data/backups", "data/inventory.json",)
+    mock_restore.assert_called_once_with(inventory, backups[1], "data/inventory.json",)
+def test_restore_selected_inventory_backup_cancelled():
+    from app.main import restore_selected_inventory_backup
+    from app.inventory_service import InventoryService
+    inventory = InventoryService()
+    backups = [Path("data/backups/inventory_backup_2026-09-24_120000.json"), Path("data/backups/inventory_backup_2026-09-25_120000.json"),]
+    with patch("app.main.list_inventory_backups", return_value=backups,), \
+         patch("app.ui.display_inventory_backups"), \
+         patch("app.ui.get_backup_selection", return_value=0), \
+         patch("app.ui.get_confirmation", return_value=False), \
+         patch("app.main.restore_inventory_backup") as mock_restore, \
+         patch("builtins.print") as mock_print:
+        restore_selected_inventory_backup(inventory, "data/backups", "data/inventory.json",)
+    mock_restore.assert_not_called()
+    mock_print.assert_any_call("Inventory backup restoration cancelled.")

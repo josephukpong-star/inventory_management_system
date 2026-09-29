@@ -444,3 +444,19 @@ def test_display_inventory_backups_empty(capsys):
     display_inventory_backups([])
     captured = capsys.readouterr()
     assert "No inventory backups available." in captured.out
+def test_get_backup_selection_valid(monkeypatch):
+    from app.ui import get_backup_selection
+    backups = ["backup1.json", "backup2.json", "backup3.json"]
+    monkeypatch.setattr("builtins.input", lambda _: "2")
+    result = get_backup_selection(backups)
+    assert result == 1
+def test_get_backup_selection_invalid_then_valid(monkeypatch, capsys):
+    from app.ui import get_backup_selection
+    backups = ["backup1.json", "backup2.json", "backup3.json"]
+    inputs = iter(["abc", "0", "4", "2"])
+    monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+    result = get_backup_selection(backups)
+    assert result == 1
+    captured = capsys.readouterr()
+    assert "Invalid selection. Please enter a number." in captured.out
+    assert "Invalid selection. Please enter a number between 1 and 3." in captured.out

@@ -70,6 +70,22 @@ def load_inventory(inventory, file_path):
 def restore_inventory(inventory, backup_file_path, file_path):
     inventory.restore_inventory(backup_file_path, file_path)
     print("Inventory backup restored successfully.")
+def restore_inventory_backup(inventory, backup_file_path, file_path):
+    inventory.restore_inventory_backup(backup_file_path, file_path)
+    print("Inventory versioned backup restored successfully.")
+def restore_selected_inventory_backup(inventory, backup_directory, file_path,):
+    backups = list_inventory_backups(backup_directory)
+    if not backups:
+        ui.display_inventory_backups(backups)
+        return
+    ui.display_inventory_backups(backups)
+    selection = ui.get_backup_selection(backups)
+    backup_file_path = backups[selection]
+    confirmed = ui.get_confirmation(f"Restore backup '{backup_file_path.name}'?")
+    if not confirmed:
+        print("Inventory backup restoration cancelled.")
+        return
+    restore_inventory_backup(inventory, backup_file_path, file_path,)
 def show_category_summary(inventory):
     summary = inventory.get_category_summary()
     ui.display_category_summary(summary)

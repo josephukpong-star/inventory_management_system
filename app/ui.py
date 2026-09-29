@@ -171,6 +171,15 @@ def get_confirmation(prompt):
         if response in ("y", "n"):
             return response == "y"
         print("Invalid input. Please enter y or n.")
+def get_backup_selection(backups):
+    while True:
+        try:
+            selection = int(input("Enter backup number to restore: "))
+            if 1 <= selection <= len(backups):
+                return selection - 1
+            print(f"Invalid selection. Please enter a number between 1 and {len(backups)}.")
+        except ValueError:
+            print("Invalid selection. Please enter a number.")
 def get_quantity_change():
     while True:
         try:
