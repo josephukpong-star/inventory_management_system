@@ -167,6 +167,8 @@ def main(file_path="data/inventory.json", backup_file_path="data/inventory_backu
                 restore_inventory(inventory, backup_file_path, file_path)
             elif choice == 25:
                 view_inventory_backups(backup_directory)
+            elif choice == 26:
+                restore_selected_inventory_backup(inventory, backup_directory, file_path,)
         except ValueError as error:
             print(f"Error: {error}")
         except FileNotFoundError:

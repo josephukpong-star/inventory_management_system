@@ -31,14 +31,15 @@ def display_menu():
     print("23. View Deleted Products History")
     print("24. Restore Inventory Backup")
     print("25. View Inventory Backups")
+    print("26. Restore Inventory Backup Version")
 
 def get_menu_choice():
     while True:
         try:
             choice = int(input("Choose an option: "))
-            if 1 <= choice <= 25:
+            if 1 <= choice <= 26:
                 return choice
-            print("Invalid choice. Please enter a number between 1 and 25.")
+            print("Invalid choice. Please enter a number between 1 and 26.")
         except ValueError:
             print("Invalid input. Please enter a number.")
 def get_stock_status(quantity, low_stock_threshold=5):
