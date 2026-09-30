@@ -1,5 +1,6 @@
 import os
 from app.inventory_service import InventoryService
+from app.config import (DEFAULT_INVENTORY_FILE, DEFAULT_BACKUP_FILE, DEFAULT_BACKUP_DIRECTORY, DEFAULT_REPORT_FILE,)
 from app.storage import create_inventory_backup, list_inventory_backups
 from app import ui
 def add_product(inventory):
@@ -93,7 +94,7 @@ def show_inventory_report(inventory):
     report = inventory.generate_inventory_report()
     ui.display_inventory_report(report)
 def save_inventory_report(inventory):
-    inventory.save_inventory_report("inventory_report.txt")
+    inventory.save_inventory_report(DEFAULT_REPORT_FILE)
     print("Inventory report saved successfully.")
 def show_transaction_history(inventory):
     transactions = inventory.get_transactions()
@@ -110,7 +111,7 @@ def show_dashboard(inventory):
 def show_inventory_alerts(inventory):
     alerts = inventory.get_inventory_alerts()
     ui.display_inventory_alerts(alerts)
-def main(file_path="data/inventory.json", backup_file_path="data/inventory_backup.json", backup_directory="data/backups",):
+def main(file_path=DEFAULT_INVENTORY_FILE, backup_file_path=DEFAULT_BACKUP_FILE, backup_directory=DEFAULT_BACKUP_DIRECTORY,):
     inventory = InventoryService()
     while True:
         ui.display_menu()

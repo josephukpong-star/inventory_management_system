@@ -1,1 +1,6 @@
 DEFAULT_LOW_STOCK_THRESHOLD = 5
+
+DEFAULT_INVENTORY_FILE = "data/inventory.json"
+DEFAULT_BACKUP_FILE = "data/inventory_backup.json"
+DEFAULT_BACKUP_DIRECTORY = "data/backups"
+DEFAULT_REPORT_FILE = "inventory_report.txt"
