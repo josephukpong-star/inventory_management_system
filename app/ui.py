@@ -1,4 +1,5 @@
 from app.models import Product
+from app.config import DEFAULT_LOW_STOCK_THRESHOLD
 def format_currency(amount):
     return f"₦{amount:,.2f}"
 def display_menu():
@@ -42,7 +43,7 @@ def get_menu_choice():
             print("Invalid choice. Please enter a number between 1 and 26.")
         except ValueError:
             print("Invalid input. Please enter a number.")
-def get_stock_status(quantity, low_stock_threshold=5):
+def get_stock_status(quantity, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD,):
     if isinstance(low_stock_threshold, bool) or not isinstance(low_stock_threshold, int):
         raise ValueError("Low stock threshold must be an integer")
     if low_stock_threshold < 0:

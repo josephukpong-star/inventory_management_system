@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.config import DEFAULT_LOW_STOCK_THRESHOLD
 from app.models import Product
 from app.storage import (save_inventory_data, load_inventory_data, save_inventory_report,)
 class InventoryService:
@@ -126,7 +127,7 @@ class InventoryService:
         return [product for product in self.products if 0 < product.quantity <= threshold]
     def get_out_of_stock_products(self):
         return [product for product in self.products if product.quantity == 0]
-    def get_product_stock_status(self, product_id, low_stock_threshold=5):
+    def get_product_stock_status(self, product_id, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD,):
         self._validate_low_stock_threshold(low_stock_threshold)
         product = self.get_product(product_id)
         if product.quantity == 0:
@@ -135,7 +136,7 @@ class InventoryService:
             return "LOW STOCK"
         else:
             return "IN STOCK"
-    def get_inventory_alerts(self, low_stock_threshold=5):
+    def get_inventory_alerts(self, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD,):
         self._validate_low_stock_threshold(low_stock_threshold)
         alerts = []
         for product in self.products:
@@ -192,7 +193,7 @@ class InventoryService:
         return category_summary
     def get_category_summary(self):
         return self._build_category_summary(self.products)
-    def get_inventory_summary(self, low_stock_threshold=5):
+    def get_inventory_summary(self, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD,):
         self._validate_low_stock_threshold(low_stock_threshold)
         total_products = len(self.products)
         total_quantity = sum(product.quantity for product in self.products)
@@ -205,7 +206,7 @@ class InventoryService:
             return self.products
         normalized_category = category.strip().lower()
         return [product for product in self.products if product.category.lower() == normalized_category]
-    def generate_inventory_report(self, low_stock_threshold=5, title="INVENTORY REPORT", category=None):
+    def generate_inventory_report(self, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD, title="INVENTORY REPORT", category=None,):
         self._validate_low_stock_threshold(low_stock_threshold)
         if not title or not str(title).strip():
             raise ValueError("Report title cannot be empty")
@@ -290,7 +291,7 @@ class InventoryService:
     def get_categories_by_inventory_value(self):
         category_values = self.total_value_by_category()
         return sorted(category_values.items(), key=lambda item: item[1], reverse=True)
-    def get_low_stock_percentage(self, low_stock_threshold=5):
+    def get_low_stock_percentage(self, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD,):
         self._validate_low_stock_threshold(low_stock_threshold)
         total_products = len(self.products)
         if total_products == 0:
@@ -309,7 +310,7 @@ class InventoryService:
             return 0.0
         out_of_stock_count = len(self.get_out_of_stock_products())
         return ((total_products - out_of_stock_count) / total_products) * 100
-    def get_stock_status_counts(self, low_stock_threshold=5):
+    def get_stock_status_counts(self, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD,):
         self._validate_low_stock_threshold(low_stock_threshold)
         return {"in_stock": len([product for product in self.products if product.quantity > low_stock_threshold]), "low_stock": len(self.get_low_stock_products(low_stock_threshold)), "out_of_stock": len(self.get_out_of_stock_products()),}
     def get_inventory_value_percentage(self):
@@ -317,7 +318,7 @@ class InventoryService:
         if total_value == 0:
             return {product.name: 0.0 for product in self.products}
         return {product.name: round(((product.price * product.quantity) / total_value) * 100, 2) for product in self.products}
-    def get_dashboard_data(self, low_stock_threshold=5):
+    def get_dashboard_data(self, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD,):
         self._validate_low_stock_threshold(low_stock_threshold)
         summary = self.get_inventory_summary(low_stock_threshold)
         stock_counts = self.get_stock_status_counts(low_stock_threshold)
