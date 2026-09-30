@@ -1,5 +1,5 @@
 from datetime import datetime
-from app.config import DEFAULT_LOW_STOCK_THRESHOLD
+from app.config import DEFAULT_LOW_STOCK_THRESHOLD, DEFAULT_REPORT_TITLE
 from app.models import Product
 from app.storage import (save_inventory_data, load_inventory_data, save_inventory_report,)
 class InventoryService:
@@ -206,7 +206,7 @@ class InventoryService:
             return self.products
         normalized_category = category.strip().lower()
         return [product for product in self.products if product.category.lower() == normalized_category]
-    def generate_inventory_report(self, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD, title="INVENTORY REPORT", category=None,):
+    def generate_inventory_report(self, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD, title=DEFAULT_REPORT_TITLE, category=None,):
         self._validate_low_stock_threshold(low_stock_threshold)
         if not title or not str(title).strip():
             raise ValueError("Report title cannot be empty")
