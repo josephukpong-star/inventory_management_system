@@ -122,7 +122,7 @@ class InventoryService:
         for product in self.products:
             total += product.price * product.quantity
         return total
-    def get_low_stock_products(self, threshold=5):
+    def get_low_stock_products(self, threshold=DEFAULT_LOW_STOCK_THRESHOLD,):
         self._validate_low_stock_threshold(threshold)
         return [product for product in self.products if 0 < product.quantity <= threshold]
     def get_out_of_stock_products(self):
