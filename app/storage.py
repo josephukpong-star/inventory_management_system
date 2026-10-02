@@ -1,6 +1,13 @@
 import json
 from pathlib import Path
 from app.models import Product
+
+
+def _copy_json_file(source_file_path, destination_file_path):
+    with open(source_file_path, "r") as source_file:
+        data = json.load(source_file)
+    with open(destination_file_path, "w") as destination_file:
+        json.dump(data, destination_file, indent=4)
 def _product_from_dict(item):
     return Product(item["product_id"], item["name"], item["price"], item["quantity"], item.get("category", "Uncategorized"))
 def save_products(products, file_path):
@@ -52,10 +59,7 @@ def load_inventory_data(file_path, return_full_state=False):
     return products, transactions
 
 def backup_inventory_data(source_file_path, backup_file_path):
-    with open(source_file_path, "r") as source_file:
-        data = json.load(source_file)
-    with open(backup_file_path, "w") as backup_file:
-        json.dump(data, backup_file, indent=4)
+    _copy_json_file(source_file_path, backup_file_path)
 
 def create_inventory_backup(source_file_path, backup_directory):
     from datetime import datetime
@@ -76,13 +80,7 @@ def restore_inventory_backup(backup_file_path, source_file_path):
     source_file_path = Path(source_file_path)
     if not backup_file_path.exists():
         raise FileNotFoundError(backup_file_path)
-    with open(backup_file_path, "r") as backup_file:
-        data = json.load(backup_file)
-    with open(source_file_path, "w") as source_file:
-        json.dump(data, source_file, indent=4)
-def restore_inventory_data(backup_file_path, source_file_path):
-    with open(backup_file_path, "r") as backup_file:
-        data = json.load(backup_file)
+    _copy_json_file(backup_file_path, source_file_path)
 
-    with open(source_file_path, "w") as source_file:
-        json.dump(data, source_file, indent=4)
+def restore_inventory_data(backup_file_path, source_file_path):
+    _copy_json_file(backup_file_path, source_file_path)
