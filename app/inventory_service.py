@@ -312,7 +312,7 @@ class InventoryService:
         return ((total_products - out_of_stock_count) / total_products) * 100
     def get_stock_status_counts(self, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD,):
         self._validate_low_stock_threshold(low_stock_threshold)
-        return {"in_stock": len([product for product in self.products if product.quantity > low_stock_threshold]), "low_stock": len(self.get_low_stock_products(low_stock_threshold)), "out_of_stock": len(self.get_out_of_stock_products()),}
+        return {"in_stock": sum(1 for product in self.products if product.quantity > low_stock_threshold), "low_stock": len(self.get_low_stock_products(low_stock_threshold)), "out_of_stock": len(self.get_out_of_stock_products()),}
     def get_inventory_value_percentage(self):
         total_value = self.calculate_total_value()
         if total_value == 0:
