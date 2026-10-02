@@ -1,7 +1,7 @@
 from app.models import Product
-from app.config import DEFAULT_LOW_STOCK_THRESHOLD
+from app.config import DEFAULT_LOW_STOCK_THRESHOLD, DEFAULT_CURRENCY_SYMBOL
 def format_currency(amount):
-    return f"₦{amount:,.2f}"
+    return f"{DEFAULT_CURRENCY_SYMBOL}{amount:,.2f}"
 def display_menu():
     print("========================================")
     print("       INVENTORY MANAGEMENT SYSTEM")
