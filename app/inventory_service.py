@@ -329,6 +329,6 @@ class InventoryService:
         category_values = self.total_value_by_category()
         inventory_value_percentage = self.get_inventory_value_percentage()
         top_category = (max(category_values, key=category_values.get) if category_values else None)
-        attention_products = [product.name for product in self.products if product.quantity == 0 or product.quantity <= low_stock_threshold]
+        attention_products = [product.name for product in self.products if product.quantity <= low_stock_threshold]
         attention_count = len(attention_products)
         return {"total_products": summary["total_products"], "total_quantity": summary["total_quantity"], "total_value": summary["total_value"], "in_stock": stock_counts["in_stock"], "low_stock": stock_counts["low_stock"], "out_of_stock": stock_counts["out_of_stock"], "stock_health": self.get_stock_health_score(), "top_product": top_product, "category_values": category_values, "inventory_value_percentage": inventory_value_percentage, "top_category": top_category, "attention_products": attention_products, "top_products_by_value": top_products_by_value, "top_products_with_values": top_products_with_values, "attention_count": attention_count,}
