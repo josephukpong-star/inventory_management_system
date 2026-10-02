@@ -1,5 +1,5 @@
 from datetime import datetime
-from app.config import DEFAULT_LOW_STOCK_THRESHOLD, DEFAULT_REPORT_TITLE
+from app.config import (DEFAULT_LOW_STOCK_THRESHOLD, DEFAULT_REPORT_TITLE, DEFAULT_CURRENCY_SYMBOL,)
 from app.models import Product
 from app.storage import (save_inventory_data, load_inventory_data, save_inventory_report,)
 class InventoryService:
@@ -232,7 +232,7 @@ class InventoryService:
         report.append("")
         report.append(f"Total Products: {summary['total_products']}")
         report.append(f"Total Quantity: {summary['total_quantity']}")
-        report.append(f"Total Inventory Value: ₦{summary['total_value']:,.2f}")
+        report.append(f"Total Inventory Value: " f"{DEFAULT_CURRENCY_SYMBOL}{summary['total_value']:,.2f}")
         report.append(f"Low Stock: {summary['low_stock_count']}")
         report.append(f"Out of Stock: {summary['out_of_stock_count']}")
         report.append("")
@@ -250,11 +250,11 @@ class InventoryService:
         report.append("----------------------------------------")
         report.append(f"Stock-In Transactions: " f"{transaction_summary['stock_in_transactions']}")
         report.append(f"Stock-In Quantity: " f"{transaction_summary['total_stock_in_quantity']}")
-        report.append(f"Stock-In Value: " f"₦{transaction_value_summary['total_stock_in_value']:,.2f}")
+        report.append(f"Stock-In Value: " f"{DEFAULT_CURRENCY_SYMBOL}{transaction_value_summary['total_stock_in_value']:,.2f}")
         report.append("")
         report.append(f"Stock-Out Transactions: " f"{transaction_summary['stock_out_transactions']}")
         report.append(f"Stock-Out Quantity: " f"{transaction_summary['total_stock_out_quantity']}")
-        report.append(f"Stock-Out Value: " f"₦{transaction_value_summary['total_stock_out_value']:,.2f}")
+        report.append(f"Stock-Out Value: "f"{DEFAULT_CURRENCY_SYMBOL}{transaction_value_summary['total_stock_out_value']:,.2f}")
         category_summary = self._build_category_summary(products)
         report.append("")
         report.append("Categories:")
@@ -263,7 +263,7 @@ class InventoryService:
             report.append(f"{category}")
             report.append(f"Products: {data['product_count']}")
             report.append(f"Quantity: {data['total_quantity']}")
-            report.append(f"Value: ₦{data['total_value']:,.2f}")
+            report.append(f"Value: {DEFAULT_CURRENCY_SYMBOL}{data['total_value']:,.2f}")
             report.append("")
         return "\n".join(report)
     def save_inventory_report(self, file_path):
