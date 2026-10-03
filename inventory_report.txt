@@ -1,0 +1,54 @@
+========================================
+           INVENTORY REPORT
+========================================
+
+Report Generated: 03 October 2026 20:37
+
+Total Products: 7
+Total Quantity: 36
+Total Inventory Value: ₦9,324,000.00
+Low Stock: 5
+Out of Stock: 0
+
+Low Stock Products:
+----------------------------------------
+Laptop - Quantity: 5
+Mouse - Quantity: 2
+Dell Laptop - Quantity: 4
+Keyboard - Quantity: 3
+24" Monitor - Quantity: 2
+
+Out of Stock Products:
+----------------------------------------
+
+Stock Movement:
+----------------------------------------
+Stock-In Transactions: 1
+Stock-In Quantity: 10
+Stock-In Value: ₦950,000.00
+
+Stock-Out Transactions: 1
+Stock-Out Quantity: 2
+Stock-Out Value: ₦190,000.00
+
+Categories:
+----------------------------------------
+Computers
+Products: 2
+Quantity: 9
+Value: ₦7,930,000.00
+
+Accessories
+Products: 3
+Quantity: 17
+Value: ₦264,000.00
+
+Monitors
+Products: 1
+Quantity: 2
+Value: ₦370,000.00
+
+Storage
+Products: 1
+Quantity: 8
+Value: ₦760,000.00

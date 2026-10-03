@@ -1,14 +1,76 @@
-[
-    {
-        "product_id": 1,
-        "name": "Laptop",
-        "price": 850000,
-        "quantity": 5
-    },
-    {
-        "product_id": 2,
-        "name": "Mouse",
-        "price": 15000,
-        "quantity": 2
-    }
-]
+{
+    "products": [
+        {
+            "product_id": 1,
+            "name": "Laptop",
+            "price": 850000,
+            "quantity": 5,
+            "category": "Computers"
+        },
+        {
+            "product_id": 2,
+            "name": "Mouse",
+            "price": 15000,
+            "quantity": 2,
+            "category": "Accessories"
+        },
+        {
+            "product_id": 3,
+            "name": "Dell Laptop",
+            "price": 920000.0,
+            "quantity": 4,
+            "category": "Computers"
+        },
+        {
+            "product_id": 4,
+            "name": "Wireless Mouse",
+            "price": 15000.0,
+            "quantity": 12,
+            "category": "Accessories"
+        },
+        {
+            "product_id": 5,
+            "name": "Keyboard",
+            "price": 18000.0,
+            "quantity": 3,
+            "category": "Accessories"
+        },
+        {
+            "product_id": 6,
+            "name": "24\" Monitor",
+            "price": 185000.0,
+            "quantity": 2,
+            "category": "Monitors"
+        },
+        {
+            "product_id": 7,
+            "name": "External Hard Drive",
+            "price": 95000.0,
+            "quantity": 8,
+            "category": "Storage"
+        }
+    ],
+    "transactions": [
+        {
+            "product_id": 7,
+            "product_name": "External Hard Drive",
+            "price": 95000.0,
+            "type": "STOCK-IN",
+            "quantity": 10,
+            "total_value": 950000.0,
+            "timestamp": "2026-10-03T16:28:46.817849"
+        },
+        {
+            "product_id": 7,
+            "product_name": "External Hard Drive",
+            "price": 95000.0,
+            "type": "STOCK-OUT",
+            "quantity": 2,
+            "total_value": 190000.0,
+            "timestamp": "2026-10-03T16:34:57.579135"
+        }
+    ],
+    "removed_products": [],
+    "deleted_products": [],
+    "deleted_record_counter": 0
+}
