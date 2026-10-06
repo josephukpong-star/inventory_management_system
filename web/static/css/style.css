@@ -1,0 +1,143 @@
+/* =========================================
+   Inventory Management System
+   Professional Dashboard
+   ========================================= */
+
+* {box-sizing: border-box;}
+
+body {margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #1f2937;}
+
+/* =========================================
+   Sidebar
+   ========================================= */
+
+.sidebar {position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: #1f4e78; color: white; display: flex; flex-direction: column;}
+
+.sidebar-brand {padding: 25px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.15);}
+
+.sidebar-brand h2 {margin: 0; font-size: 28px;}
+
+.sidebar-brand p {margin: 5px 0 0; font-size: 13px; opacity: 0.8;}
+
+.sidebar-nav {padding: 20px 12px;}
+
+.nav-link {display: block; color: white; padding: 13px 15px; margin-bottom: 6px; border-radius: 6px; font-size: 15px; transition: background 0.2s;}
+
+.nav-link:hover,
+.nav-link.active {background: rgba(255, 255, 255, 0.15);}
+
+.sidebar-bottom {margin-top: auto; padding: 20px 12px;}
+
+.logout-link {display: block; background: #c0392b; color: white; text-align: center; padding: 12px; border-radius: 6px;}
+
+.logout-link:hover {background: #a93226;}
+
+/* =========================================
+   Main Content
+   ========================================= */
+
+.main-content {margin-left: 240px; min-height: 100vh;}
+
+/* =========================================
+   Top Header
+   ========================================= */
+
+.top-header {background: white; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e5e7eb;}
+
+.top-header h1 {margin: 0; font-size: 26px;}
+
+.top-header p {margin: 5px 0 0; color: #6b7280; font-size: 14px;}
+
+.user-info {text-align: right;}
+
+.user-info strong {display: block; font-size: 15px;}
+
+.user-info span {display: block; margin-top: 4px; color: #6b7280; font-size: 13px;}
+
+/* =========================================
+   Welcome Section
+   ========================================= */
+
+.welcome-section {padding: 30px 30px 10px;}
+
+.welcome-section h2 {margin: 0; font-size: 22px;}
+
+.welcome-section p {color: #6b7280;}
+
+/* =========================================
+   Dashboard Cards
+   ========================================= */
+
+.dashboard-cards {display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px 30px;}
+
+.dashboard-card {background: white; padding: 22px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);}
+
+.dashboard-card h3 {margin: 0; font-size: 14px; color: #6b7280; font-weight: normal;}.card-value {margin: 12px 0 0; font-size: 26px; font-weight: bold;}
+
+/* =========================================
+   Dashboard Sections
+   ========================================= */
+
+.dashboard-section {display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 10px 30px 30px;}
+
+.section-card {background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);}
+
+.section-card h2 {margin-top: 0; font-size: 18px;}.section-card p {color: #6b7280;}
+
+/* =========================================
+   Transactions
+   ========================================= */
+
+.transaction-item {padding: 14px 0; border-bottom: 1px solid #e5e7eb;}
+
+.transaction-item:last-child { border-bottom: none;}
+
+.transaction-item strong {display: block; font-size: 15px; margin-bottom: 5px;}
+
+.transaction-item span {display: block; color: #6b7280; font-size: 13px; margin-top: 3px;}
+
+/* =========================================
+   Stock Alerts
+   ========================================= */
+
+.alert-item {padding: 14px 0; border-bottom: 1px solid #e5e7eb;}
+
+.alert-item:last-child {border-bottom: none;}
+
+.alert-item strong {display: block; font-size: 15px; margin-bottom: 5px;}
+
+.alert-item span {display: block; color: #c0392b font-size: 13px; font-weight: 600;}
+
+/* =========================================
+   Products Table
+   ========================================= */
+
+.table-container {overflow-x: auto;}
+
+.products-table {width: 100%; border-collapse: collapse; margin-top: 15px;}
+
+.products-table th {background: #f4f6f8; color: #374151; text-align: left; padding: 14px; font-size: 13px; font-weight: 600; border-bottom: 2px solid #e5e7eb;}
+
+.products-table td {padding: 14px; border-bottom: 1px solid #e5e7eb; font-size: 14px;}
+
+.products-table tbody tr:hover {background: #f9fafb;}
+
+.products-table td strong {font-weight: 600;}
+
+/* =========================================
+   Responsive Layout
+   ========================================= */
+
+@media (max-width: 1000px) {.dashboard-cards {grid-template-columns: repeat(2, 1fr);}}
+
+@media (max-width: 700px) {.sidebar {position: relative; width: 100%; height: auto;} .main-content {margin-left: 0;} .top-header {align-items: flex-start; gap: 20px;} .dashboard-cards {grid-template-columns: 1fr;} .dashboard-section {grid-template-columns: 1fr;}}
+
+@media (max-width: 500px) {.top-header {flex-direction: column;} .user-info {text-align: left;}}
+
+.backup-button {margin-top: 15px; padding: 10px 18px; border: none; border-radius: 6px; background: #2563eb; color: white; font-size: 14px; font-weight: 600; cursor: pointer;}
+
+.backup-button:hover {background: #1d4ed8;}
+
+.restore-button {padding: 8px 14px; border: none; border-radius: 6px; background: #16a34a; color: white; font-size: 13px; font-weight: 600; cursor: pointer;}
+
+.restore-button:hover {background: #15803d;}

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Backups - Inventory Management System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-header">
+            <h2>Inventory System</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/dashboard" class="nav-link">
+                Dashboard
+            </a>
+
+            <a href="/products" class="nav-link">
+                Products
+            </a>
+
+            <a href="/stock" class="nav-link">
+                Stock
+            </a>
+
+            <a href="/transactions" class="nav-link">
+                Transactions
+            </a>
+
+            <a href="/reports" class="nav-link">
+                Reports
+            </a>
+
+            <a href="/backups" class="nav-link active">
+                Backups
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="top-header">
+
+            <div>
+                <h1>Backups</h1>
+                <p>Manage inventory backups and recovery files</p>
+            </div>
+
+            <div class="user-info">
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+
+        </header>
+
+
+        <section class="dashboard-section">
+
+            <div class="section-card">
+
+                <h2>Inventory Backups</h2>
+
+                <p>
+                    The following backup files are available for inventory recovery.
+                </p>
+
+                <form method="POST" action="{{ url_for('backups') }}">
+                    <button type="submit" class="backup-button">Create New Backup</button>
+                </form>
+
+                <div class="table-container">
+
+                    <table class="products-table">
+
+                        <thead>
+                            <tr>
+                                <th>Backup File</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for backup in backups %}
+
+                            <tr>
+
+                                <td>
+                                    {{ backup.name }}
+                                </td>
+
+                                <td>
+
+                                    <a href="{{ url_for('view_backup', backup_file=backup.name) }}"
+                                        class="view-backup-button">
+                                        View
+                                    </a>
+
+                                    <form method="POST"
+                                          action="{{ url_for('restore_backup') }}"
+                                          style="display: inline;">
+
+                                        <input type="hidden"
+                                                name="backup_file"
+                                                value="{{ backup.name }}">
+
+                                        <button type="submit" class="restore-button">
+                                            Restore
+                                        </button>
+
+                                    </form>
+
+                                </td>
+                            </tr>
+
+                            {% else %}
+
+                            <tr>
+
+                                <td colspan="2">
+                                    No backups available.
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

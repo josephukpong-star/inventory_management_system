@@ -27,3 +27,9 @@ Thumbs.db
 # Inventory runtime data and backups
 data/inventory_backup.json
 data/backups/
+
+# Environment variables
+.env
+
+# Local web authentication data
+web/users.json

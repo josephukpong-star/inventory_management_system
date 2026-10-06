@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Inventory Management System - Transactions</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <h2>IMS</h2>
+            <p>Inventory System</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/products" class="nav-link">Products</a>
+            <a href="/stock" class="nav-link">Stock</a>
+            <a href="/transactions" class="nav-link active">Transactions</a>
+            <a href="#" class="nav-link">Reports</a>
+            <a href="#" class="nav-link">Backups</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="top-header">
+
+            <div>
+                <h1>Transactions</h1>
+                <p>View inventory stock movements</p>
+            </div>
+
+            <div class="user-info">
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+
+        </header>
+
+
+        <section class="welcome-section">
+
+            <h2>Transaction History</h2>
+
+            <p>
+                View all stock-in and stock-out transactions recorded in the system.
+            </p>
+
+        </section>
+
+
+        <section class="dashboard-section">
+
+            <div class="section-card">
+
+                <h2>Transactions</h2>
+
+                {% if transactions %}
+
+                    <div class="table-container">
+
+                        <table class="products-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total Value</th>
+                                    <th>Date & Time</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for transaction in transactions|reverse %}
+
+                                    <tr>
+
+                                        <td>
+                                            <strong>{{ transaction["type"] }}</strong>
+                                        </td>
+
+                                        <td>
+                                            {{ transaction["product_name"] }}
+                                        </td>
+
+                                        <td>
+                                            {{ transaction["quantity"] }}
+                                        </td>
+
+                                        <td>
+                                            ₦{{ "{:,.2f}".format(transaction["price"]) }}
+                                        </td>
+
+                                        <td>
+                                            ₦{{ "{:,.2f}".format(transaction["total_value"]) }}
+                                        </td>
+
+                                        <td>
+                                            {{ transaction["timestamp"] }}
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <p>No transactions found.</p>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

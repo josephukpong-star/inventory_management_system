@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Inventory Management System - Stock</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <h2>IMS</h2>
+            <p>Inventory System</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/products" class="nav-link">Products</a>
+            <a href="/stock" class="nav-link active">Stock</a>
+            <a href="#" class="nav-link">Transactions</a>
+            <a href="#" class="nav-link">Reports</a>
+            <a href="#" class="nav-link">Backups</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="top-header">
+
+            <div>
+                <h1>Stock</h1>
+                <p>Monitor current inventory levels</p>
+            </div>
+
+            <div class="user-info">
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+
+        </header>
+
+
+        <section class="welcome-section">
+
+            <h2>Stock Overview</h2>
+
+            <p>
+                Monitor the current quantity and stock status of all products.
+            </p>
+
+        </section>
+
+
+        <section class="dashboard-section">
+
+            <div class="section-card">
+
+                <h2>Current Stock</h2>
+
+                {% if products %}
+
+                    <div class="table-container">
+
+                        <table class="products-table">
+
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product</th>
+                                    <th>Category</th>
+                                    <th>Quantity</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {% for product in products %}
+
+                                    <tr>
+
+                                        <td>{{ product.product_id }}</td>
+
+                                        <td>
+                                            <strong>{{ product.name }}</strong>
+                                        </td>
+
+                                        <td>{{ product.category }}</td>
+
+                                        <td>{{ product.quantity }}</td>
+
+                                        <td>
+                                            {% if product.quantity == 0 %}
+                                                OUT OF STOCK
+                                            {% elif product.quantity <= 5 %}
+                                                LOW STOCK
+                                            {% else %}
+                                                IN STOCK
+                                            {% endif %}
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <p>No stock records found.</p>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

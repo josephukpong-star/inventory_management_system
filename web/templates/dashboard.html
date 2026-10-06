@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Inventory Management System - Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <h2>IMS</h2>
+            <p>Inventory System</p>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/dashboard" class="nav-link active">
+                Dashboard
+            </a>
+
+            <a href="/products" class="nav-link">
+                Products
+            </a>
+
+            <a href="/stock" class="nav-link">
+                Stock
+            </a>
+
+            <a href="/transactions" class="nav-link">
+                Transactions
+            </a>
+
+            <a href="/reports" class="nav-link">
+                Reports
+            </a>
+
+            <a href="backups" class="nav-link">
+                Backups
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/logout" class="logout-link">
+                Logout
+            </a>
+        </div>
+
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- Top Header -->
+        <header class="top-header">
+
+            <div>
+                <h1>Dashboard</h1>
+                <p>Inventory Management Overview</p>
+            </div>
+
+            <div class="user-info">
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+
+        </header>
+
+
+        <!-- Welcome Section -->
+        <section class="welcome-section">
+
+            <h2>Welcome, {{ username }}!</h2>
+
+            <p>
+                Here is an overview of your inventory management system.
+            </p>
+
+        </section>
+
+
+        <!-- Dashboard Cards -->
+        <section class="dashboard-cards">
+
+            <div class="dashboard-card">
+                <h3>Total Products</h3>
+                <p class="card-value">{{ dashboard_data["total_products"] }}</p>
+            </div>
+
+            <div class="dashboard-card">
+                <h3>Total Stock</h3>
+                <p class="card-value">{{ dashboard_data["total_quantity"] }}</p>
+            </div>
+
+            <div class="dashboard-card">
+                <h3>Low Stock</h3>
+                <p class="card-value">{{ dashboard_data["low_stock"] }}</p>
+            </div>
+
+            <div class="dashboard-card">
+                <h3>Inventory Value</h3>
+                <p class="card-value">₦{{ "{:,.2f}".format(dashboard_data["total_value"]) }}</p>
+            </div>
+
+        </section>
+
+
+        <!-- Dashboard Sections -->
+        <section class="dashboard-section">
+
+            <div class="section-card">
+
+    <h2>Recent Transactions</h2>
+
+    {% if transactions %}
+
+        {% for transaction in transactions|reverse %}
+
+            <div class="transaction-item">
+
+                <strong>{{ transaction["product_name"] }}</strong>
+
+                <span>
+                    {{ transaction["type"] }}
+                    — {{ transaction["quantity"] }} units
+                </span>
+
+                <span>
+                    ₦{{ "{:,.2f}".format(transaction["total_value"]) }}
+                </span>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>No transactions found.</p>
+
+    {% endif %}
+
+</div>
+
+
+            <div class="section-card">
+
+    <h2>Low Stock Alerts</h2>
+
+    {% if alerts %}
+
+        {% for alert in alerts %}
+
+            <div class="alert-item">
+
+                <strong>{{ alert["product_name"] }}</strong>
+
+                <span>
+                    {{ alert["status"] }}
+                    — {{ alert["quantity"] }} units remaining
+                </span>
+
+            </div>
+
+        {% endfor %}
+
+    {% else %}
+
+        <p>No stock alerts.</p>
+
+    {% endif %}
+
+</div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

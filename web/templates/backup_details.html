@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Backup Details - Inventory Management System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-header">
+            <h2>Inventory System</h2>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/dashboard" class="nav-link">
+                Dashboard
+            </a>
+
+            <a href="/products" class="nav-link">
+                Products
+            </a>
+
+            <a href="/stock" class="nav-link">
+                Stock
+            </a>
+
+            <a href="/transactions" class="nav-link">
+                Transactions
+            </a>
+
+            <a href="/reports" class="nav-link">
+                Reports
+            </a>
+
+            <a href="/backups" class="nav-link active">
+                Backups
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="top-header">
+
+            <div>
+                <h1>Backup Details</h1>
+                <p>View the contents of a saved inventory backup</p>
+            </div>
+
+            <div class="user-info">
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+
+        </header>
+
+
+        <section class="dashboard-section">
+
+            <div class="section-card">
+
+                <h2>Backup File</h2>
+
+                <p>
+                    {{ backup_file }}
+                </p>
+
+            </div>
+
+
+            <div class="section-card">
+
+                <h2>Backup Summary</h2>
+
+                <div class="stats-grid">
+
+                    <div class="stat-card">
+                        <h3>Products</h3>
+                        <p>{{ backup_data["products"]|length }}</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <h3>Transactions</h3>
+                        <p>{{ backup_data["transactions"]|length }}</p>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="section-card">
+
+                <h2>Products in Backup</h2>
+
+                <div class="table-container">
+
+                    <table class="products-table">
+
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for product in backup_data["products"] %}
+
+                            <tr>
+
+                                <td>
+                                    {{ product["product_id"] }}
+                                </td>
+
+                                <td>
+                                    {{ product["name"] }}
+                                </td>
+
+                                <td>
+                                    {{ product["category"] }}
+                                </td>
+
+                                <td>
+                                    ₦{{ "{:,.2f}".format(product["price"]) }}
+                                </td>
+
+                                <td>
+                                    {{ product["quantity"] }}
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <div class="section-card">
+
+                <h2>Transactions in Backup</h2>
+
+                <div class="table-container">
+
+                    <table class="products-table">
+
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total Value</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for transaction in backup_data["transactions"] %}
+
+                            <tr>
+
+                                <td>
+                                    {{ transaction["transaction_type"] }}
+                                </td>
+
+                                <td>
+                                    {{ transaction["product_name"] }}
+                                </td>
+
+                                <td>
+                                    {{ transaction["quantity"] }}
+                                </td>
+
+                                <td>
+                                    ₦{{ "{:,.2f}".format(transaction["price"]) }}
+                                </td>
+
+                                <td>
+                                    ₦{{ "{:,.2f}".format(transaction["total_value"]) }}
+                                </td>
+
+                            </tr>
+
+                            {% else %}
+
+                            <tr>
+                                <td colspan="5">
+                                    No transactions in this backup.
+                                </td>
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <div class="section-card">
+
+                <a href="/backups" class="backup-button">
+                    Back to Backups
+                </a>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

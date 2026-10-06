@@ -1,7 +1,7 @@
 from datetime import datetime
 from app.config import (DEFAULT_LOW_STOCK_THRESHOLD, DEFAULT_REPORT_TITLE, DEFAULT_CURRENCY_SYMBOL,)
 from app.models import Product
-from app.storage import (save_inventory_data, load_inventory_data, save_inventory_report,)
+from app.storage import (save_inventory_data, load_inventory_data, save_inventory_report, create_inventory_backup, list_inventory_backups,)
 class InventoryService:
     def __init__(self):
         self.products = []
@@ -29,6 +29,10 @@ class InventoryService:
         return {"total_stock_in_value": sum(transaction["total_value"] for transaction in stock_in_transactions), "total_stock_out_value": sum(transaction["total_value"] for transaction in stock_out_transactions),}
     def save_inventory(self, file_path):
         save_inventory_data(self.products, self.transactions, file_path, self.removed_products, self.deleted_products, self.deleted_record_counter,)
+    def create_backup(self, file_path, backup_directory):
+        return create_inventory_backup(file_path, backup_directory)
+    def list_backups(self, backup_directory):
+        return list_inventory_backups(backup_directory)
     def load_inventory(self, file_path):(self.products, self.transactions, self.removed_products, self.deleted_products, self.deleted_record_counter,) = load_inventory_data(file_path, return_full_state=True)
     def restore_inventory(self, backup_file_path, file_path):
         from app.storage import restore_inventory_data
@@ -38,6 +42,9 @@ class InventoryService:
         from app.storage import restore_inventory_backup
         restore_inventory_backup(backup_file_path, file_path)
         self.load_inventory(file_path)
+    def safe_restore_backup(self, backup_file_path, file_path, backup_directory):
+        self.create_backup(file_path, backup_directory)
+        self.restore_inventory_backup(backup_file_path, file_path)
     def add_product(self, product):
         for existing_product in self.products:
             if existing_product.product_id == product.product_id:

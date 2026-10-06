@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Inventory Management System - Reports</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <h2>IMS</h2>
+            <p>Inventory System</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/products" class="nav-link">Products</a>
+            <a href="/stock" class="nav-link">Stock</a>
+            <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/reports" class="nav-link active">Reports</a>
+            <a href="#" class="nav-link">Backups</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="top-header">
+
+            <div>
+                <h1>Reports</h1>
+                <p>Inventory reports and business summaries</p>
+            </div>
+
+            <div class="user-info">
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+
+        </header>
+
+
+        <section class="welcome-section">
+
+            <h2>Inventory Reports</h2>
+
+            <p>
+                View important inventory information and business summaries.
+            </p>
+
+        </section>
+
+
+        <section class="dashboard-section">
+
+    <div class="section-card">
+
+        <h2>Inventory Summary</h2>
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <span class="stat-label">Total Products</span>
+                <strong class="stat-value">
+                    {{ report_data["total_products"] }}
+                </strong>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Total Quantity</span>
+                <strong class="stat-value">
+                    {{ report_data["total_quantity"] }}
+                </strong>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Inventory Value</span>
+                <strong class="stat-value">
+                    ₦{{ "{:,.2f}".format(report_data["total_value"]) }}
+                </strong>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Low Stock</span>
+                <strong class="stat-value">
+                    {{ report_data["low_stock"] }}
+                </strong>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Out of Stock</span>
+                <strong class="stat-value">
+                    {{ report_data["out_of_stock"] }}
+                </strong>
+            </div>
+
+            <div class="stat-card">
+                <span class="stat-label">Stock Health</span>
+                <strong class="stat-value">
+                    {{ report_data["stock_health"] }}%
+                </strong>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+    </main>
+
+</body>
+</html>
