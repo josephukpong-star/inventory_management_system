@@ -46,7 +46,7 @@
             "product_id": 7,
             "name": "External Hard Drive",
             "price": 95000.0,
-            "quantity": 8,
+            "quantity": 11,
             "category": "Storage"
         }
     ],
@@ -68,6 +68,42 @@
             "quantity": 2,
             "total_value": 190000.0,
             "timestamp": "2026-10-03T16:34:57.579135"
+        },
+        {
+            "product_id": 7,
+            "product_name": "External Hard Drive",
+            "price": 95000.0,
+            "type": "STOCK-IN",
+            "quantity": 5,
+            "total_value": 475000.0,
+            "timestamp": "2026-10-06T23:34:49.534039"
+        },
+        {
+            "product_id": 7,
+            "product_name": "External Hard Drive",
+            "price": 95000.0,
+            "type": "STOCK-OUT",
+            "quantity": 2,
+            "total_value": 190000.0,
+            "timestamp": "2026-10-07T14:04:06.285232"
+        },
+        {
+            "product_id": 7,
+            "product_name": "External Hard Drive",
+            "price": 110000.0,
+            "type": "STOCK-IN",
+            "quantity": 1,
+            "total_value": 110000.0,
+            "timestamp": "2026-10-07T15:45:41.251228"
+        },
+        {
+            "product_id": 7,
+            "product_name": "External Hard Drive",
+            "price": 125000.0,
+            "type": "STOCK-OUT",
+            "quantity": 1,
+            "total_value": 125000.0,
+            "timestamp": "2026-10-07T16:34:56.395495"
         }
     ],
     "removed_products": [],

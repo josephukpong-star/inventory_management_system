@@ -106,7 +106,7 @@ body {margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #1f
 
 .alert-item strong {display: block; font-size: 15px; margin-bottom: 5px;}
 
-.alert-item span {display: block; color: #c0392b font-size: 13px; font-weight: 600;}
+.alert-item span {display: block; color: #c0392b; font-size: 13px; font-weight: 600;}
 
 /* =========================================
    Products Table

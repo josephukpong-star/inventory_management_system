@@ -67,24 +67,36 @@ class InventoryService:
         if new_quantity < 0:
             raise ValueError("Quantity cannot be negative")
         product.quantity = new_quantity
-    def _record_transaction(self, product, transaction_type, quantity):
-        self.transactions.append({"product_id": product.product_id, "product_name": product.name, "price": product.price, "type": transaction_type, "quantity": quantity, "total_value": product.price * quantity, "timestamp": datetime.now().isoformat()})
-    def stock_in(self, product_id, quantity):
+    def _record_transaction(self, product, transaction_type, quantity, price=None):
+        if price is None:
+            price = product.price
+        self.transactions.append({"product_id": product.product_id, "product_name": product.name, "price": price, "type": transaction_type, "quantity": quantity, "total_value": price * quantity, "timestamp": datetime.now().isoformat()})
+    def stock_in(self, product_id, quantity, price=None):
         self._validate_product_id(product_id)
         self._validate_stock_quantity(quantity, "Stock-in")
         if quantity <= 0:
             raise ValueError("Stock-in quantity must be greater than zero")
+        if price is not None:
+            if isinstance(price, bool) or not isinstance(price, (int, float)):
+                raise ValueError("Stock-in price must be a number")
+            if price < 0:
+                raise ValueError("Stock-in price cannot be negative")
         product = self.get_product(product_id)
         self.update_quantity(product_id, quantity)
-        self._record_transaction(product, "STOCK-IN", quantity)
-    def stock_out(self, product_id, quantity):
+        self._record_transaction(product, "STOCK-IN", quantity, price=price)
+    def stock_out(self, product_id, quantity, price=None):
         self._validate_product_id(product_id)
         self._validate_stock_quantity(quantity, "Stock-out")
         if quantity <= 0:
             raise ValueError("Stock-out quantity must be greater than zero")
+        if price is not None:
+            if isinstance(price, bool) or not isinstance(price, (int, float)):
+                raise ValueError("Stock-out price must be a number")
+            if price < 0:
+                raise ValueError("Stock-out price cannot be negative")
         product = self.get_product(product_id)
         self.update_quantity(product_id, -quantity)
-        self._record_transaction(product, "STOCK-OUT", quantity)
+        self._record_transaction(product, "STOCK-OUT", quantity, price=price)
     def update_product(self, product_id, name=None, price=None, category=None):
         product = self.get_product(product_id)
         if name is not None:

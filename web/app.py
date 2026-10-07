@@ -58,13 +58,30 @@ def products():
 
     return render_template("products.html", username=session["username"], role=session["role"], products=products)
 
-@app.route("/stock")
+@app.route("/stock", methods=["GET", "POST"])
 def stock():
     if "username" not in session:
         return "Please log in first."
 
     inventory_service = InventoryService()
     inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+
+    if request.method == "POST":
+        product_id = int(request.form.get("product_id"))
+        quantity = int(request.form.get("quantity"))
+        action = request.form.get("action")
+
+        if action == "stock_in":
+            price = float(request.form.get("price"))
+            inventory_service.stock_in(product_id, quantity, price=price)
+
+        elif action == "stock_out":
+            price = float(request.form.get("price"))
+            inventory_service.stock_out(product_id, quantity, price=price)
+
+        inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+
+        return redirect(url_for("stock"))
 
     products = inventory_service.products
 
