@@ -290,6 +290,24 @@ def test_stock_in_increases_product_quantity():
     inventory.add_product(product)
     inventory.stock_in(1, 5)
     assert product.quantity == 15
+def test_stock_in_updates_weighted_average_cost():
+    service = InventoryService()
+    product = Product(1, "Laptop", 500000, 10)
+    service.add_product(product)
+    service.stock_in(1, 5, price=600000)
+    updated_product = service.get_product(1)
+    assert updated_product.quantity == 15
+    assert updated_product.price == pytest.approx(533333.3333333333)
+def test_stock_in_records_actual_purchase_cost():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 500000, 10)
+    inventory.add_product(product)
+    inventory.stock_in(1, 5, price=600000)
+    transaction = inventory.get_transactions()[0]
+    assert transaction["inventory_cost"] == 3000000
+    assert transaction["price"] == 600000
+    assert transaction["total_value"] == 3000000
+    assert inventory.get_product(1).price == pytest.approx( 533333.3333333333)
 def test_stock_in_rejects_zero_quantity():
     inventory = InventoryService()
     product = Product(1, "Laptop", 850000, 10)
@@ -312,9 +330,11 @@ def test_stock_out_cannot_exceed_available_quantity():
     inventory = InventoryService()
     product = Product(1, "Laptop", 850000, 10)
     inventory.add_product(product)
+    initial_transaction_count = len(inventory.get_transactions())
     with pytest.raises(ValueError, match="Quantity cannot be negative"):
         inventory.stock_out(1, 15)
     assert product.quantity == 10
+    assert len(inventory.get_transactions()) == initial_transaction_count
 def test_stock_out_all_available_quantity():
     inventory = InventoryService()
     product = Product(1, "Laptop", 850000, 10)
@@ -455,6 +475,41 @@ def test_stock_out_transaction_records_total_value():
     inventory.stock_out(1, 3)
     transactions = inventory.get_transactions()
     assert transactions[0]["total_value"] == 2550000
+def test_stock_out_records_inventory_cost_separately():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 850000, 10)
+    inventory.add_product(product)
+    inventory.stock_out(1, 3)
+    transaction = inventory.get_transactions()[0]
+    assert transaction["inventory_cost"] == 2550000
+    assert transaction["sales_value"] == 0
+def test_stock_out_sale_records_sales_value():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 500000, 10)
+    inventory.add_product(product)
+    inventory.stock_out(1, 2, price=650000, reason="Sale",)
+    transaction = inventory.get_transactions()[0]
+    assert transaction["sales_value"] == 1300000
+    assert transaction["inventory_cost"] == 1000000
+    assert transaction["reason"] == "Sale"
+def test_stock_out_sale_records_gross_profit():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 500000, 10)
+    inventory.add_product(product)
+    inventory.stock_out(1, 2, price=650000, reason="Sale",)
+    transaction = inventory.get_transactions()[0]
+    gross_profit = (transaction["sales_value"] - transaction["inventory_cost"])
+    assert gross_profit == 300000
+def test_stock_out_damaged_goods_records_no_sales():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 500000, 10)
+    inventory.add_product(product)
+    inventory.stock_out(1, 2, reason="Damaged Goods",)
+    transaction = inventory.get_transactions()[0]
+    assert transaction["reason"] == "Damaged Goods"
+    assert transaction["inventory_cost"] == 1000000
+    assert transaction["sales_value"] == 0
+    assert inventory.get_product(1).quantity == 8
 def test_transaction_preserves_price_at_transaction_time():
     inventory = InventoryService()
     product = Product(1, "Laptop", 850000, 10)
@@ -1559,12 +1614,22 @@ def test_get_dashboard_data():
     inventory.add_product(Product(2, "Phone", 200000, 3, "Electronics"))
     inventory.add_product(Product(3, "Chair", 100000, 0, "Furniture"))
     result = inventory.get_dashboard_data()
-    assert result == {"total_products": 3, "total_quantity": 13, "total_value": 8600000, "in_stock": 1, "low_stock": 1, "out_of_stock": 1, "stock_health": 66.66666666666666, "top_product": "Laptop", "category_values": { "Electronics": 8600000, "Furniture": 0,}, "top_category": "Electronics", "attention_products": ["Phone", "Chair"], "inventory_value_percentage": {"Laptop": 93.02, "Phone": 6.98, "Chair": 0.0,}, "top_products_by_value": ["Laptop", "Phone", "Chair"], "top_products_with_values": [ {"name": "Laptop", "value": 8000000}, {"name": "Phone", "value": 600000}, {"name": "Chair", "value": 0},], "attention_count": 2,}   
+    assert result == {"total_products": 3, "total_quantity": 13, "total_value": 8600000, "in_stock": 1, "low_stock": 1, "out_of_stock": 1, "stock_health": 66.66666666666666, "top_product": "Laptop", "category_values": {"Electronics": 8600000, "Furniture": 0,}, "top_category": "Electronics", "attention_products": ["Phone", "Chair"], "inventory_value_percentage": { "Laptop": 93.02, "Phone": 6.98, "Chair": 0.0,}, "top_products_by_value": ["Laptop", "Phone", "Chair"], "top_products_with_values": [ {"name": "Laptop", "value": 8000000}, {"name": "Phone", "value": 600000}, {"name": "Chair", "value": 0},], "attention_count": 2, "stock_in_value": 0, "stock_out_sales_value": 0, "cost_of_goods_sold": 0, "gross_profit": 0,}
 def test_get_dashboard_data_empty_inventory():
     inventory = InventoryService()
     result = inventory.get_dashboard_data()
-    assert result == {"total_products": 0, "total_quantity": 0, "total_value": 0, "in_stock": 0, "low_stock": 0, "out_of_stock": 0, "stock_health": 0.0, "top_product": None, "category_values": {}, "category_values": {}, "attention_products": [], "inventory_value_percentage": {}, "top_products_by_value": [], "top_products_with_values": [], "attention_count": 0,
-"top_category": None,}
+    assert result == {"total_products": 0, "total_quantity": 0, "total_value": 0, "in_stock": 0, "low_stock": 0, "out_of_stock": 0, "stock_health": 0.0, "top_product": None, "category_values": {}, "inventory_value_percentage": {}, "top_category": None, "attention_products": [], "top_products_by_value": [], "top_products_with_values": [], "attention_count": 0, "stock_in_value": 0, "stock_out_sales_value": 0, "cost_of_goods_sold": 0, "gross_profit": 0,}
+def test_dashboard_calculates_stock_and_sales_financial_values():
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 500000, 10)
+    inventory.add_product(product)
+    inventory.stock_in(1, 5, price=600000)
+    inventory.stock_out(1, 2, price=650000, reason="Sale",)
+    dashboard = inventory.get_dashboard_data()
+    assert dashboard["stock_in_value"] == 3000000
+    assert dashboard["stock_out_sales_value"] == 1300000
+    assert dashboard["cost_of_goods_sold"] == 1066666.6666666667
+    assert dashboard["gross_profit"] == 233333.33333333326
 def test_get_dashboard_data_includes_stock_health():
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 800000, 10, "Electronics"))

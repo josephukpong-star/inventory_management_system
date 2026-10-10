@@ -22,9 +22,10 @@
             <a href="/dashboard" class="nav-link">Dashboard</a>
             <a href="/products" class="nav-link">Products</a>
             <a href="/stock" class="nav-link active">Stock</a>
-            <a href="#" class="nav-link">Transactions</a>
-            <a href="#" class="nav-link">Reports</a>
-            <a href="#" class="nav-link">Backups</a>
+            <a href="/sales" class="nav-link">Sales</a>
+            <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/reports" class="nav-link">Reports</a>
+            <a href="/backups" class="nav-link">Backups</a>
         </nav>
 
         <div class="sidebar-bottom">
@@ -49,6 +50,18 @@
             </div>
 
         </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
 
         <section class="welcome-section">

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Removed Products - Inventory Management System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <h2>Inventory System</h2>
+            <p>Management Dashboard</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/products" class="nav-link active">Products</a>
+            <a href="/stock" class="nav-link">Stock</a>
+            <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/reports" class="nav-link">Reports</a>
+            <a href="/backups" class="nav-link">Backups</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <header class="top-header">
+
+            <div>
+                <h1>Removed Products</h1>
+                <p>Manage removed inventory items and restore products when needed.</p>
+            </div>
+
+            <div>
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+
+        </header>
+
+
+        <section class="page-content">
+
+            <div class="section-card">
+
+                <div class="products-toolbar">
+
+                    <div>
+                        <h2>Removed Products</h2>
+                        <p>Products removed from active inventory.</p>
+                    </div>
+
+                    <a href="/products" class="btn-secondary">
+                        Back to Products
+                    </a>
+
+                </div>
+
+
+                {% if removed_products %}
+
+                <div class="table-container removed-table-container">
+
+                    <table class="removed-table">
+
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for product in removed_products %}
+
+                            <tr>
+
+                                <td>{{ product.product_id }}</td>
+
+                                <td>{{ product.name }}</td>
+
+                                <td>{{ product.category }}</td>
+
+                                <td>
+                                    ₦{{ "{:,.2f}".format(product.price) }}
+                                </td>
+
+                                <td>{{ product.quantity }}</td>
+
+                                <td>
+
+                                    <form action="/products/restore" method="POST" style="display:inline;">
+                                        <input
+                                            type="hidden"
+                                            name="product_id"
+                                            value="{{ product.product_id }}"
+                                        >
+
+                                        <button type="submit" class="btn-primary">
+                                            Restore Product
+                                        </button>
+                                    </form>
+
+                                    <form
+                                        action="/products/delete-permanently"
+                                        method="POST"
+                                        style="display:inline;"
+                                        onsubmit="return confirm('WARNING: This action cannot be undone. Are you sure you want to permanently delete this product?');"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="product_id"
+                                            value="{{ product.product_id }}"
+                                        >
+
+                                        <button type="submit" class="btn-danger">
+                                            Delete Forever
+                                        </button>
+                                    </form>
+
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                {% else %}
+
+                <div class="empty-state">
+                    <h3>All Products Accounted For</h3>
+
+                    <p>
+                        There are no removed products to display.
+                        Products you remove from active inventory will appear here.
+                    </p>
+
+                    <a href="/products" class="btn-primary">
+                        Return to Products
+                    </a>
+                </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

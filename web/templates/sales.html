@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Inventory Management System - Sales</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <h2>IMS</h2>
+            <p>Inventory System</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/products" class="nav-link">Products</a>
+            <a href="/stock" class="nav-link">Stock</a>
+            <a href="/sales" class="nav-link active">Sales</a>
+            <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/reports" class="nav-link">Reports</a>
+            <a href="/backups" class="nav-link">Backups</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <header class="top-header">
+
+            <div>
+                <h1>Sales</h1>
+                <p>Record customer sales and update inventory</p>
+            </div>
+
+            <div class="user-info">
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="welcome-section">
+            <h2>Record a Sale</h2>
+
+            <p>
+                Select a product, enter the quantity sold and selling price,
+                then submit the sale.
+            </p>
+        </section>
+
+        <section class="dashboard-section">
+
+            <div class="section-card">
+
+                <h2>New Sale</h2>
+
+                {% if products %}
+
+                    <form method="POST" action="{{ url_for('sales') }}">
+
+                        <div class="form-group">
+                            <label for="product_id">Product</label>
+
+                            <select id="product_id" name="product_id" required>
+                                <option value="">Select a product</option>
+
+                                {% for product in products %}
+                                    <option
+                                        value="{{ product.product_id }}"
+                                        data-stock="{{ product.quantity }}"
+                                        data-cost="{{ product.price }}"
+                                        {% if product.quantity <= 0 %}disabled{% endif %}
+                                    >
+                                        {{ product.name }} —
+                                        {{ product.quantity }} units available
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="quantity">Quantity Sold</label>
+
+                            <input
+                                type="number"
+                                id="quantity"
+                                name="quantity"
+                                min="1"
+                                step="1"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="price">Selling Price Per Unit (₦)</label>
+
+                            <input
+                                type="number"
+                                id="price"
+                                name="price"
+                                min="0"
+                                step="0.01"
+                                placeholder="Enter selling price"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sale_total">Estimated Sale Total (₦)</label>
+
+                            <input
+                                type="text"
+                                id="sale_total"
+                                value="₦0.00"
+                                readonly
+                            >
+                        </div>
+
+                        <p id="stock_message" aria-live="polite">
+                            Select a product to see available stock.
+                        </p>
+
+                        <p id="price_warning" class="price-warning" aria-live="polite">
+
+                        </p>
+
+                        <p id="profit_preview" class="profit-preview" aria-live="polite">
+                             Enter a selling price to see the estimated gross profit or loss.
+                        </p>
+
+                        <button
+                            type="submit"
+                            class="backup-button"
+                        >
+                            Record Sale
+                        </button>
+
+                    </form>
+
+                {% else %}
+
+                    <p>
+                        No products are available. Add a product before recording
+                        a sale.
+                    </p>
+
+                    <a href="/products" class="backup-button">
+                        View Products
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+        const productSelect = document.getElementById("product_id");
+        const quantityInput = document.getElementById("quantity");
+        const priceInput = document.getElementById("price");
+        const totalInput = document.getElementById("sale_total");
+        const stockMessage = document.getElementById("stock_message");
+        const priceWarning = document.getElementById("price_warning");
+        const profitPreview = document.getElementById("profit_preview");
+
+        function updateSalePreview() {
+            if (!productSelect || !quantityInput || !priceInput) {
+                return;
+            }
+
+            const selectedOption =
+                productSelect.options[productSelect.selectedIndex];
+
+            const availableStock = selectedOption.dataset.stock;
+            const quantity = Number(quantityInput.value);
+            const price = Number(priceInput.value);
+
+            const total = quantity * price;
+            const purchaseCost = Number(selectedOption.dataset.cost); if ( priceInput.value !== "" && Number.isFinite(price) && price >= 0 && Number.isFinite(purchaseCost) && price < purchaseCost ) { priceWarning.textContent = "Warning: The selling price is below the purchase cost. " + "This sale will result in a gross loss of ₦" + (purchaseCost - price).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " per unit."; } else { priceWarning.textContent = ""; }
+            if (quantityInput.value !== "" && priceInput.value !== "" && Number.isFinite(quantity) && quantity > 0 && Number.isFinite(price) && price >= 0 && Number.isFinite(purchaseCost)) {const estimatedProfit = (price - purchaseCost) * quantity; const formattedAmount = Math.abs(estimatedProfit).toLocaleString("en-NG",{minimumFractionDigits: 2, maximumFractionDigits: 2}); 
+if (estimatedProfit > 0) {
+    profitPreview.textContent =
+        "Estimated gross profit: ₦" + formattedAmount;
+
+    profitPreview.className = "profit-preview profit";
+
+} else if (estimatedProfit < 0) {
+    profitPreview.textContent =
+        "Estimated gross loss: ₦" + formattedAmount;
+
+    profitPreview.className = "profit-preview loss";
+
+} else {
+    profitPreview.textContent =
+        "Estimated gross profit/loss: ₦0.00 (Break-even)";
+
+    profitPreview.className = "profit-preview break-even";
+}
+
+} else {
+    profitPreview.textContent =
+        "Enter a selling price and quantity to see the estimated gross profit or loss.";
+
+    profitPreview.className = "profit-preview";
+}
+            totalInput.value = Number.isFinite(total)
+                ? "₦" + total.toLocaleString("en-NG", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                })
+                : "₦0.00";
+
+            if (availableStock === undefined) {
+                stockMessage.textContent =
+                    "Select a product to see available stock.";
+
+                quantityInput.removeAttribute("max");
+                return;
+            }
+
+            quantityInput.max = availableStock;
+
+            if (Number(availableStock) <= 0) {
+                stockMessage.textContent = "This product is out of stock.";
+            } else if (quantity > Number(availableStock)) {
+                stockMessage.textContent =
+                    "Insufficient stock. Only " +
+                    availableStock + " units are available.";
+            } else {
+                stockMessage.textContent =
+                    availableStock + " units available.";
+            }
+        }
+
+        if (productSelect) {productSelect.addEventListener("change", updateSalePreview); quantityInput.addEventListener("input", updateSalePreview); priceInput.addEventListener("input", updateSalePreview);}
+    </script>
+
+</body>
+</html>

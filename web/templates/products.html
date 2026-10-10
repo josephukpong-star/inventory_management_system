@@ -21,10 +21,11 @@
         <nav class="sidebar-nav">
             <a href="/dashboard" class="nav-link">Dashboard</a>
             <a href="/products" class="nav-link active">Products</a>
-            <a href="#" class="nav-link">Stock</a>
-            <a href="#" class="nav-link">Transactions</a>
-            <a href="#" class="nav-link">Reports</a>
-            <a href="#" class="nav-link">Backups</a>
+            <a href="/stock" class="nav-link">Stock</a>
+            <a href="/sales" class="nav-link">Sales</a>
+            <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/reports" class="nav-link">Reports</a>
+            <a href="/backups" class="nav-link">Backups</a>
         </nav>
 
         <div class="sidebar-bottom">
@@ -66,13 +67,35 @@
 
             <div class="section-card">
 
-                <h2>Products</h2>
+                <div class="products-toolbar">
+                    <div>
+                        <h2>Products</h2>
+                        <p>Manage your inventory products.</p>
+                    </div>
+
+                    <div class="products-actions">
+                        <input type="text" id="productSearch" placeholder="Search products...">
+
+                        <a href="/products/removed" class="btn-secondary">
+                            Removed Products
+                        </a>
+
+                        <a href="/products/deleted-history" class="btn-secondary">
+                            Deleted History
+                        </a>
+
+                        <a href="/products/add" class="btn-primary">
+                            + Add Product
+                        </a>
+                    </div>
+
+                </div>
 
                 {% if products %}
 
                     <div class="table-container">
 
-                        <table class="products-table">
+                        <table class="products-table" id="productsTable">
 
                             <thead>
                                 <tr>
@@ -82,6 +105,7 @@
                                     <th>Price</th>
                                     <th>Quantity</th>
                                     <th>Status</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
 
@@ -107,16 +131,36 @@
 
                                         <td>
                                             {% if product.quantity == 0 %}
-                                                OUT OF STOCK
+                                                <span class="product-status status-danger">
+                                                    OUT OF STOCK
+                                                </span>
                                             {% elif product.quantity <= 5 %}
-                                                LOW STOCK
+                                                <span class="product-status status-warning">
+                                                    LOW STOCK
+                                                </span>
                                             {% else %}
-                                                IN STOCK
-                                            {% endif %}
+                                                <span class="product-status status-health">
+                                                    IN STOCK
+                                                </span>
+                                            {% endif %} 
+                                        </td>
+
+                                        
+                                        <td>
+                                            <a href="/products/update?product_id={{ product.product_id }}" class="btn-secondary">
+                                                Update
+                                            </a>
+
+                                            <form action="/products/remove" method="POST" style="display:inline;"
+                                                    onsubmit="return confirm('Are you sure you want to remove this product?');">
+                                                <input type="hidden" name="product_id" value="{{ product.product_id }}">
+                                                <button type="submit" class="btn-danger">
+                                                    Remove
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>   
 
-                                    </tr>
 
                                 {% endfor %}
 
@@ -137,6 +181,12 @@
         </section>
 
     </main>
+
+    <script>
+        const searchInput = document.getElementById("productSearch");
+        const table = document.getElementById("productsTable");
+        searchInput.addEventListener("input", function () {const searchTerm = this.value.toLowerCase(); const rows = table.querySelectorAll("tbody tr"); rows.forEach(function (row) {const rowText = row.textContent.toLowerCase(); row.style.display = rowText.includes(searchTerm) ? "" : "none";});});
+</script>
 
 </body>
 </html>

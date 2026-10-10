@@ -67,10 +67,13 @@ class InventoryService:
         if new_quantity < 0:
             raise ValueError("Quantity cannot be negative")
         product.quantity = new_quantity
-    def _record_transaction(self, product, transaction_type, quantity, price=None):
+    def _record_transaction(self, product, transaction_type, quantity, price=None, inventory_cost=None,):
         if price is None:
             price = product.price
-        self.transactions.append({"product_id": product.product_id, "product_name": product.name, "price": price, "type": transaction_type, "quantity": quantity, "total_value": price * quantity, "timestamp": datetime.now().isoformat()})
+        if inventory_cost is None:
+            inventory_cost = product.price * quantity
+        sales_value = 0
+        self.transactions.append({"product_id": product.product_id, "product_name": product.name, "price": price, "type": transaction_type, "quantity": quantity, "total_value": price * quantity, "inventory_cost": inventory_cost, "sales_value": sales_value, "timestamp": datetime.now().isoformat(),})
     def stock_in(self, product_id, quantity, price=None):
         self._validate_product_id(product_id)
         self._validate_stock_quantity(quantity, "Stock-in")
@@ -82,21 +85,37 @@ class InventoryService:
             if price < 0:
                 raise ValueError("Stock-in price cannot be negative")
         product = self.get_product(product_id)
+        old_quantity = product.quantity
+        old_cost = product.price
+        purchase_cost = old_cost if price is None else price
+        new_quantity = old_quantity + quantity
+        new_average_cost = ((old_quantity * old_cost) + (quantity * purchase_cost)) / new_quantity
         self.update_quantity(product_id, quantity)
-        self._record_transaction(product, "STOCK-IN", quantity, price=price)
-    def stock_out(self, product_id, quantity, price=None):
+        product.price = new_average_cost
+        self._record_transaction(product, "STOCK-IN", quantity, price=purchase_cost, inventory_cost=purchase_cost * quantity,)
+    def stock_out(self, product_id, quantity, price=None, reason="Other"):
         self._validate_product_id(product_id)
         self._validate_stock_quantity(quantity, "Stock-out")
         if quantity <= 0:
             raise ValueError("Stock-out quantity must be greater than zero")
+        if reason == "Sale" and price is None:
+            raise ValueError("Selling price is required for a sale")
         if price is not None:
             if isinstance(price, bool) or not isinstance(price, (int, float)):
                 raise ValueError("Stock-out price must be a number")
             if price < 0:
                 raise ValueError("Stock-out price cannot be negative")
+        valid_reasons = {"Sale", "Damaged Goods", "Internal Use", "Gift/Free Issue", "Other",}
+        if reason not in valid_reasons:
+            raise ValueError("Invalid stock-out reason")
         product = self.get_product(product_id)
+        inventory_cost = product.price * quantity
         self.update_quantity(product_id, -quantity)
-        self._record_transaction(product, "STOCK-OUT", quantity, price=price)
+        self._record_transaction(product, "STOCK-OUT", quantity, price=price,)
+        transaction = self.transactions[-1] 
+        transaction["reason"] = reason 
+        transaction["inventory_cost"] = inventory_cost 
+        transaction["sales_value"] = (price * quantity if reason == "Sale" and price is not None else 0)
     def update_product(self, product_id, name=None, price=None, category=None):
         product = self.get_product(product_id)
         if name is not None:
@@ -340,6 +359,10 @@ class InventoryService:
     def get_dashboard_data(self, low_stock_threshold=DEFAULT_LOW_STOCK_THRESHOLD,):
         self._validate_low_stock_threshold(low_stock_threshold)
         summary = self.get_inventory_summary(low_stock_threshold)
+        stock_in_value = sum(transaction.get("inventory_cost", 0) for transaction in self.transactions if transaction.get("type") == "STOCK-IN")
+        stock_out_sales_value = sum(transaction.get("sales_value", 0) for transaction in self.transactions if transaction.get("type") == "STOCK-OUT" and transaction.get("reason") == "Sale")
+        cost_of_goods_sold = sum(transaction.get("inventory_cost", 0) for transaction in self.transactions if transaction.get("type") == "STOCK-OUT" and transaction.get("reason") == "Sale")
+        gross_profit = stock_out_sales_value - cost_of_goods_sold
         stock_counts = self.get_stock_status_counts(low_stock_threshold)
         products_by_value = self.get_products_by_inventory_value()
         top_products_with_values = [{"name": product.name, "value": product.price * product.quantity} for product in products_by_value]
@@ -350,4 +373,4 @@ class InventoryService:
         top_category = (max(category_values, key=category_values.get) if category_values else None)
         attention_products = [product.name for product in self.products if product.quantity <= low_stock_threshold]
         attention_count = len(attention_products)
-        return {"total_products": summary["total_products"], "total_quantity": summary["total_quantity"], "total_value": summary["total_value"], "in_stock": stock_counts["in_stock"], "low_stock": stock_counts["low_stock"], "out_of_stock": stock_counts["out_of_stock"], "stock_health": self.get_stock_health_score(), "top_product": top_product, "category_values": category_values, "inventory_value_percentage": inventory_value_percentage, "top_category": top_category, "attention_products": attention_products, "top_products_by_value": top_products_by_value, "top_products_with_values": top_products_with_values, "attention_count": attention_count,}
+        return {"total_products": summary["total_products"], "total_quantity": summary["total_quantity"], "total_value": summary["total_value"], "in_stock": stock_counts["in_stock"], "low_stock": stock_counts["low_stock"], "out_of_stock": stock_counts["out_of_stock"], "stock_health": self.get_stock_health_score(), "top_product": top_product, "category_values": category_values, "inventory_value_percentage": inventory_value_percentage, "top_category": top_category, "attention_products": attention_products, "top_products_by_value": top_products_by_value, "top_products_with_values": top_products_with_values, "attention_count": attention_count, "stock_in_value": stock_in_value, "stock_out_sales_value": stock_out_sales_value, "cost_of_goods_sold": cost_of_goods_sold, "gross_profit": gross_profit,}

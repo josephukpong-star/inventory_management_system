@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Deleted History - Inventory Management System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <h2>Inventory System</h2>
+            <p>Management Dashboard</p>
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="/dashboard" class="nav-link">
+                Dashboard
+            </a>
+
+            <a href="/products" class="nav-link active">
+                Products
+            </a>
+
+            <a href="/stock" class="nav-link">
+                Stock
+            </a>
+
+            <a href="/transactions" class="nav-link">
+                Transactions
+            </a>
+
+            <a href="/reports" class="nav-link">
+                Reports
+            </a>
+
+            <a href="/backups" class="nav-link">
+                Backups
+            </a>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+
+    </aside>
+
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <header class="top-header">
+
+            <div>
+                <h1>Deleted History</h1>
+                <p>Review the history of permanently deleted inventory products.</p>
+            </div>
+
+            <div>
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+
+        </header>
+
+
+        <section class="page-content">
+
+            <div class="section-card">
+
+                <div class="products-toolbar">
+
+                    <div>
+                        <h2>Permanent Deletion Records</h2>
+                        <p>Review product details and timestamps for permanently deleted inventory items.</p>
+                    </div>
+
+                    <a href="/products" class="btn-secondary">
+                        Back to Products
+                    </a>
+
+                </div>
+
+
+                {% if deleted_products %}
+
+                <div class="table-container history-table-container">
+
+                    <table class="history-table">
+
+                        <thead>
+                            <tr>
+                                <th>Record ID</th>
+                                <th>Product ID</th>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Deleted At</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for record in deleted_products %}
+
+                            <tr>
+
+                                <td>{{ record.record_id }}</td>
+
+                                <td>{{ record.product.product_id }}</td>
+
+                                <td>{{ record.product.name }}</td>
+
+                                <td>{{ record.product.category }}</td>
+
+                                <td>
+                                    ₦{{ "{:,.2f}".format(record.product.price) }}
+                                </td>
+
+                                <td>{{ record.product.quantity }}</td>
+
+                                <td>{{ record.deleted_at }}</td>
+
+                                <td>{{ record.action }}</td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                {% else %}
+
+                <div class="empty-state">
+
+                    <h3>No Deletion Records Yet</h3>
+
+                    <p>
+                        Permanently deleted products will appear here.
+                        This history helps you track products removed from your inventory.
+                    </p>
+
+                    <a href="/products" class="btn-primary">
+                        Return to Products
+                </a>
+
+            </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>
