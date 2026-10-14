@@ -448,7 +448,19 @@ def view_backup():
     with open(backup_path, "r", encoding="utf-8") as file:
         backup_data = __import__("json").load(file)
 
-    return render_template("backup_details.html", username=session["username"], role=session["role"], backup_file=backup_file, backup_data=backup_data)
+    # Hide financial information from staff.
+    if not is_admin_user():
+        backup_data = backup_data.copy()
+
+        # Remove product prices from the staff-facing backup data.
+        backup_data["products"] = [{key: value for key, value in product.items() if key != "price"} for product in backup_data.get("products", [])]
+
+        # Remove financial values from the staff-facing transactions.
+        private_transaction_fields = {"price", "total_value", "sales_value", "inventory_cost", "cost_of_goods_sold", "gross_profit",}
+
+        backup_data["transactions"] = [{key: value for key, value in transaction.items() if key not in private_transaction_fields} for transaction in backup_data.get("transactions", [])]
+
+    return render_template("backup_details.html", username=session["username"], role=session["role"], backup_file=backup_file, backup_data=backup_data,)
 
 @app.route("/restore-backup", methods=["POST"])
 @admin_required

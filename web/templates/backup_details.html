@@ -50,9 +50,11 @@
                 Reports
             </a>
 
-            <a href="/financial-review" class="nav-link">
+            {% if is_admin %}
+            <a href="{{ url_for('financial_review') }}" class="nav-link">
                 Financial Review
             </a>
+            {% endif %}
 
             <a href="/backups" class="nav-link active">
                 Backups
@@ -132,7 +134,9 @@
                                 <th>ID</th>
                                 <th>Product</th>
                                 <th>Category</th>
+                                {% if is_admin %}
                                 <th>Price</th>
+                                {% endif %}
                                 <th>Quantity</th>
                             </tr>
                         </thead>
@@ -155,9 +159,11 @@
                                     {{ product["category"] }}
                                 </td>
 
+                                {% if is_admin %}
                                 <td>
                                     ₦{{ "{:,.2f}".format(product["price"]) }}
                                 </td>
+                                {% endif %}
 
                                 <td>
                                     {{ product["quantity"] }}
@@ -189,8 +195,10 @@
                                 <th>Type</th>
                                 <th>Product</th>
                                 <th>Quantity</th>
+                                {% if is_admin %}
                                 <th>Price</th>
                                 <th>Total Value</th>
+                                {% endif %}
                             </tr>
                         </thead>
 
@@ -212,6 +220,7 @@
                                     {{ transaction["quantity"] }}
                                 </td>
 
+                                {% if is_admin %}
                                 <td>
                                     ₦{{ "{:,.2f}".format(transaction["price"]) }}
                                 </td>
@@ -219,13 +228,14 @@
                                 <td>
                                     ₦{{ "{:,.2f}".format(transaction["total_value"]) }}
                                 </td>
+                                {% endif %}
 
                             </tr>
 
                             {% else %}
 
                             <tr>
-                                <td colspan="5">
+                                <td colspan="{{ 5 if is_admin else 3 }}">
                                     No transactions in this backup.
                                 </td>
                             </tr>
