@@ -290,3 +290,154 @@ Flash Messages
 
 /* Break-even */
 .profit-preview.break-even {color: #475467; background-color: #f2f4f7; border-color: #d0d5dd;}
+
+/* =========================================
+Clean Vertical Layouts for Selected Pages
+========================================= */
+
+/* Filter Records and Filter Financial Period */
+.records-filter-card,
+.financial-filter-card {width: 100%;max-width: 650px;box-sizing: border-box;}
+
+.records-filter-card form,
+.financial-filter-card form,
+.sale-form {display: flex;flex-direction: column;gap: 16px;}
+
+.records-filter-card .form-group,
+.financial-filter-card .form-group,
+.sale-form .form-group {display: flex;flex-direction: column;gap: 6px;margin-bottom: 0;}
+
+.records-filter-card input,
+.records-filter-card select,
+.financial-filter-card input,
+.financial-filter-card select,
+.sale-form input,
+.sale-form select {width: 100%;max-width: 100%;box-sizing: border-box;}
+
+.records-filter-card form .btn,
+.financial-filter-card form .btn,
+.sale-form button {align-self: flex-start;}
+
+/* Inventory Summary */
+.inventory-summary-card .stats-grid {display: flex;flex-direction: column;gap: 12px;}
+
+.inventory-summary-card .stat-card {width: 100%;box-sizing: border-box;}
+
+/* =========================================
+Improved Form Spacing - Sales, Stock and Finance
+========================================= */
+
+/* Consistent spacing inside selected forms */
+.financial-filter-card form,
+.sale-form,
+.stock-form {display: flex;flex-direction: column;gap: 20px;}
+
+.financial-filter-card .form-group,
+.sale-form .form-group,
+.stock-form .form-group {display: flex;flex-direction: column;gap: 8px;margin-bottom: 0;}
+
+/* Comfortable input spacing and sizing */
+.financial-filter-card input,
+.financial-filter-card select,
+.sale-form input,
+.sale-form select,
+.stock-form input,
+.stock-form select,
+.stock-form textarea {width: 100%;max-width: 100%;min-height: 42px;padding: 10px 12px;border: 1px solid #d1d5db;border-radius: 6px;font-size: 14px;background: #fff;}
+
+/* Clear separation between report summary items */
+.inventory-summary-card .stats-grid {display: flex;flex-direction: column;gap: 16px;}
+
+.inventory-summary-card .stat-card {width: 100%;padding: 18px;margin: 0;border: 1px solid #e5e7eb;border-radius: 8px;background: #fff;}
+
+/* Give form cards more breathing room */
+.financial-filter-card,
+.inventory-summary-card,
+.sale-form {line-height: 1.5;}
+
+.financial-filter-card,
+.inventory-summary-card {padding: 26px;}
+
+/* =========================================
+   Improved Form Spacing - Sales, Stock and Finance
+   ========================================= */
+
+/* Consistent vertical layout for forms */
+.financial-filter-card form,
+.sale-form,
+.stock-form {display: flex; flex-direction: column; gap: 20px;}
+
+/* Separate labels from their input fields */
+.financial-filter-card .form-group,
+.sale-form .form-group,
+.stock-form .form-group {display: flex; flex-direction: column; gap: 8px; margin-bottom: 0;}
+
+/* Consistent input sizing */
+.financial-filter-card input,
+.financial-filter-card select,
+.sale-form input,
+.sale-form select,
+.stock-form input,
+.stock-form select,
+.stock-form textarea {width: 100%; max-width: 100%; min-height: 42px; padding: 10px 12px; box-sizing: border-box; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background: #fff;}
+
+/* Add separation between Inventory Summary cards */
+.inventory-summary-card .stats-grid {display: flex; flex-direction: column; gap: 16px;}
+
+.inventory-summary-card .stat-card {width: 100%; padding: 18px; margin: 0; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff;}
+
+/* Improve spacing inside financial and summary cards */
+.financial-filter-card,
+.inventory-summary-card { padding: 26px; box-sizing: border-box;}
+
+/* Financial Review filter form spacing */
+.financial-filter-form {display: flex; flex-direction: column; gap: 18px; width: 100%;}
+
+.financial-filter-form .form-group {display: flex; flex-direction: column; gap: 8px; width: 100%; margin: 0;}
+
+.financial-filter-form label {display: block; margin-bottom: 0;}
+
+.financial-filter-form input,
+.financial-filter-form select {display: block; width: 100%; min-height: 44px; padding: 10px 12px; box-sizing: border-box;}
+
+.financial-filter-form button,
+.financial-filter-form a.btn { align-self: flex-start; margin: 0;}
+
+/* Reports - Inventory Summary Layout */
+.inventory-summary-card .stats-grid {display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 20px;}
+
+.inventory-summary-card .stat-card {display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 12px; min-height: 100px; padding: 20px; margin: 0; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff;}
+
+.inventory-summary-card .stat-label {display: block; line-height: 1.5;}
+
+.inventory-summary-card .stat-value {display: block; line-height: 1.4; overflow-wrap: anywhere;}
+
+@media (max-width: 700px) {.inventory-summary-card .stats-grid { grid-template-columns: 1fr;}}
+
+/* View Records - Improve spacing between sections */
+.records-filter-card {margin-bottom: 24px;}
+
+.records-filter-card + .dashboard-cards {margin-top: 24px;margin-bottom: 24px;}
+
+.records-filter-card + .dashboard-section {margin-top: 24px;}
+
+.main-content > .dashboard-section:has(.records-filter-card) {margin-bottom: 24px;}
+
+.main-content > .dashboard-cards {margin-top: 24px;margin-bottom: 24px}
+
+/* View Records - Filter Records appearance */
+.records-filter-card {padding: 28px !important;margin-bottom: 30px !important;}
+
+.records-filter-card h2 {font-size: 22px !important;margin-bottom: 24px !important;}
+
+.records-filter-card form {display: flex !important;flex-direction: column !important;gap: 22px !important;}
+
+.records-filter-card .form-group {display: flex !important;flex-direction: column !important;gap: 10px !important;margin: 0 !important;}
+
+.records-filter-card label {font-size: 15px !important;font-weight: 600 !important;line-height: 1.5 !important;}
+
+.records-filter-card input,
+.records-filter-card select {width: 100% !important;max-width: 100% !important;min-height: 46px !important;padding: 10px 12px !important;box-sizing: border-box !important;font-size: 15px !important;}
+
+.records-filter-card button,
+.records-filter-card a.btn {font-size: 14px !important;padding: 11px 18px !important;margin: 0 10px 0 0 !important;}

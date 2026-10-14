@@ -24,8 +24,14 @@
             <a href="/stock" class="nav-link">Stock</a>
             <a href="/sales" class="nav-link">Sales</a>
             <a href="/transactions" class="nav-link active">Transactions</a>
-            <a href="reports" class="nav-link">Reports</a>
-            <a href="backups" class="nav-link">Backups</a>
+            <a href="/view-records" class="nav-link">View Records</a>
+            <a href="/reports" class="nav-link">Reports</a>
+
+            {% if is_admin %}
+                <a href="/financial-review" class="nav-link">Financial Review</a>
+            {% endif %}
+
+            <a href="/backups" class="nav-link">Backups</a>
         </nav>
 
         <div class="sidebar-bottom">
@@ -34,34 +40,26 @@
 
     </aside>
 
-
     <main class="main-content">
 
         <header class="top-header">
-
             <div>
                 <h1>Transactions</h1>
-                <p>View inventory stock movements</p>
+                <p>View inventory stock movements and sales records.</p>
             </div>
 
             <div class="user-info">
                 <strong>{{ username }}</strong>
                 <span>{{ role }}</span>
             </div>
-
         </header>
 
-
         <section class="welcome-section">
-
             <h2>Transaction History</h2>
-
             <p>
-                View all stock-in and stock-out transactions recorded in the system.
+                Review recorded stock-in, stock-out, and sales transactions.
             </p>
-
         </section>
-
 
         <section class="dashboard-section">
 
@@ -80,9 +78,18 @@
                                     <th>Type</th>
                                     <th>Product</th>
                                     <th>Quantity</th>
-                                    <th>Unit Price</th>
-                                    <th>Total Value</th>
-                                    <th>Date & Time</th>
+                                    <th>Reason</th>
+
+                                    {% if is_admin %}
+                                        <th>Unit Price</th>
+                                        <th>Transaction Value</th>
+                                        <th>Inventory Cost</th>
+                                    {% else %}
+                                        <th>Selling Price</th>
+                                        <th>Sales Amount</th>
+                                    {% endif %}
+
+                                    <th>Date &amp; Time</th>
                                 </tr>
                             </thead>
 
@@ -91,31 +98,74 @@
                                 {% for transaction in transactions|reverse %}
 
                                     <tr>
-
                                         <td>
-                                            <strong>{{ transaction["type"] }}</strong>
+                                            <strong>{{ transaction.get("type", "") }}</strong>
                                         </td>
 
                                         <td>
-                                            {{ transaction["product_name"] }}
+                                            {{ transaction.get("product_name", "Unknown product") }}
                                         </td>
 
                                         <td>
-                                            {{ transaction["quantity"] }}
+                                            {{ transaction.get("quantity", 0) }}
                                         </td>
 
                                         <td>
-                                            ₦{{ "{:,.2f}".format(transaction["price"]) }}
+                                            {{ transaction.get("reason", "—") }}
                                         </td>
+
+                                        {% if is_admin %}
+
+                                            <td>
+                                                {% if transaction.get("price") is not none %}
+                                                    ₦{{ "{:,.2f}".format(transaction.get("price", 0)) }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                            <td>
+                                                {% if transaction.get("total_value") is not none %}
+                                                    ₦{{ "{:,.2f}".format(transaction.get("total_value", 0)) }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                            <td>
+                                                {% if transaction.get("inventory_cost") is not none %}
+                                                    ₦{{ "{:,.2f}".format(transaction.get("inventory_cost", 0)) }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                        {% else %}
+
+                                            <td>
+                                                {% if transaction.get("type") == "STOCK-OUT"
+                                                      and transaction.get("reason") == "Sale"
+                                                      and transaction.get("price") is not none %}
+                                                    ₦{{ "{:,.2f}".format(transaction.get("price", 0)) }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                            <td>
+                                                {% if transaction.get("type") == "STOCK-OUT"
+                                                      and transaction.get("reason") == "Sale" %}
+                                                    ₦{{ "{:,.2f}".format(transaction.get("sales_value", 0) or 0) }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
+                                        {% endif %}
 
                                         <td>
-                                            ₦{{ "{:,.2f}".format(transaction["total_value"]) }}
+                                            {{ transaction.get("timestamp", "") }}
                                         </td>
-
-                                        <td>
-                                            {{ transaction["timestamp"] }}
-                                        </td>
-
                                     </tr>
 
                                 {% endfor %}

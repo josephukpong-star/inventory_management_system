@@ -24,7 +24,9 @@
             <a href="/stock" class="nav-link active">Stock</a>
             <a href="/sales" class="nav-link">Sales</a>
             <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/view-records" class="nav-link">View Records</a>
             <a href="/reports" class="nav-link">Reports</a>
+            <a href="/financial-review" class="nav-link">Financial Review</a>
             <a href="/backups" class="nav-link">Backups</a>
         </nav>
 
@@ -85,7 +87,7 @@
                     Add new stock to an existing product.
                 </p>
 
-                <form method="POST" action="/stock">
+                <form method="POST" action="/stock" class="stock-form">
 
                     <div class="form-group">
 
@@ -167,7 +169,7 @@
         Remove stock when a product is sold or issued.
     </p>
 
-    <form method="POST" action="/stock">
+    <form method="POST" action="/stock" class="stock-form">
 
         <div class="form-group">
 

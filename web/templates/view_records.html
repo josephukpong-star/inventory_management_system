@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management System - View Records</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h2>IMS</h2>
+            <p>Inventory System</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/products" class="nav-link">Products</a>
+            <a href="/stock" class="nav-link">Stock</a>
+            <a href="/sales" class="nav-link">Sales</a>
+            <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/view-records" class="nav-link active">View Records</a>
+            <a href="/reports" class="nav-link">Reports</a>
+
+            {% if is_admin %}
+                <a href="/financial-review" class="nav-link">Financial Review</a>
+            {% endif %}
+
+            <a href="/backups" class="nav-link">Backups</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div>
+                <h1>View Records</h1>
+                <p>Find sales and inventory movements by date or type.</p>
+            </div>
+
+            <div class="user-info">
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+        </header>
+
+        <section class="welcome-section">
+            <h2>Transaction Records</h2>
+            <p>Choose a date range and transaction type to find the records you need.</p>
+        </section>
+
+        <section class="dashboard-section">
+            <div class="section-card records-filter-card">
+                <h2>Filter Records</h2>
+
+                <form method="GET" action="/view-records">
+                    <div class="form-group">
+                        <label for="period">Date Range</label>
+                        <select name="period" id="period">
+                            <option value="all" {% if period == "all" %}selected{% endif %}>All Records</option>
+                            <option value="today" {% if period == "today" %}selected{% endif %}>Today</option>
+                            <option value="yesterday" {% if period == "yesterday" %}selected{% endif %}>Yesterday</option>
+                            <option value="this_week" {% if period == "this_week" %}selected{% endif %}>This Week</option>
+                            <option value="last_week" {% if period == "last_week" %}selected{% endif %}>Last Week</option>
+                            <option value="this_month" {% if period == "this_month" %}selected{% endif %}>This Month</option>
+                            <option value="last_month" {% if period == "last_month" %}selected{% endif %}>Last Month</option>
+                            <option value="specific_date" {% if period == "specific_date" %}selected{% endif %}>Specific Date</option>
+                            <option value="custom" {% if period == "custom" %}selected{% endif %}>Custom Date Range</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Specific Date</label>
+                        <input type="date" name="date" id="date" value="{{ request.args.get('date', '') }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="start_date">Start Date</label>
+                        <input type="date" name="start_date" id="start_date" value="{{ request.args.get('start_date', '') }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="end_date">End Date</label>
+                        <input type="date" name="end_date" id="end_date" value="{{ request.args.get('end_date', '') }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="type">Transaction Type</label>
+                        <select name="type" id="type">
+                            <option value="all" {% if transaction_filter == "all" %}selected{% endif %}>All Transactions</option>
+                            <option value="sales" {% if transaction_filter == "sales" %}selected{% endif %}>Sales</option>
+                            <option value="stock_in" {% if transaction_filter == "stock_in" %}selected{% endif %}>Stock In</option>
+                            <option value="stock_out" {% if transaction_filter == "stock_out" %}selected{% endif %}>All Stock Out</option>
+                            <option value="damaged_goods" {% if transaction_filter == "damaged_goods" %}selected{% endif %}>Damaged Goods</option>
+                            <option value="internal_use" {% if transaction_filter == "internal_use" %}selected{% endif %}>Internal Use</option>
+                            <option value="gift_free_issue" {% if transaction_filter == "gift_free_issue" %}selected{% endif %}>Gift / Free Issue</option>
+                            <option value="other" {% if transaction_filter == "other" %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn">Apply Filters</button>
+                    <a href="/view-records" class="btn">Clear Filters</a>
+                </form>
+            </div>
+        </section>
+
+        <section class="dashboard-cards">
+            <div class="dashboard-card">
+                <h3>Matching Records</h3>
+                <p class="card-value">{{ record_count }}</p>
+            </div>
+
+            {% if is_admin and sales_total is not none %}
+                <div class="dashboard-card">
+                    <h3>Sales Revenue in Results</h3>
+                    <p class="card-value">₦{{ "{:,.2f}".format(sales_total) }}</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="dashboard-section">
+            <div class="section-card">
+                <h2>Matching Transactions</h2>
+
+                {% if transactions %}
+                    <div class="table-container">
+                        <table class="products-table">
+                            <thead>
+                                <tr>
+                                    <th>Date &amp; Time</th>
+                                    <th>Type</th>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Reason</th>
+                                    {% if is_admin %}
+                                        <th>Unit Price</th>
+                                        <th>Transaction Value</th>
+                                        <th>Inventory Cost</th>
+                                    {% else %}
+                                        <th>Selling Price</th>
+                                        <th>Sales Amount</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for transaction in transactions %}
+                                    <tr>
+                                        <td>{{ transaction.get("timestamp", "") }}</td>
+                                        <td>{{ transaction.get("type", "") }}</td>
+                                        <td>{{ transaction.get("product_name", "Unknown product") }}</td>
+                                        <td>{{ transaction.get("quantity", 0) }}</td>
+                                        <td>{{ transaction.get("reason", "—") }}</td>
+
+                                        {% if is_admin %}
+                                            <td>
+                                                {% if transaction.get("price") is not none %}
+                                                    ₦{{ "{:,.2f}".format(transaction.get("price", 0)) }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if transaction.get("total_value") is not none %}
+                                                    ₦{{ "{:,.2f}".format(transaction.get("total_value", 0)) }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if transaction.get("inventory_cost") is not none %}
+                                                    ₦{{ "{:,.2f}".format(transaction.get("inventory_cost", 0)) }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                        {% else %}
+                                            <td>
+                                                {% if transaction.get("reason") == "Sale" and transaction.get("price") is not none %}
+                                                    ₦{{ "{:,.2f}".format(transaction.get("price", 0)) }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if transaction.get("reason") == "Sale" %}
+                                                    ₦{{ "{:,.2f}".format(transaction.get("sales_value", 0)) }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No transactions match the selected filters.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>

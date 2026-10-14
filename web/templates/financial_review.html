@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management System - Financial Review</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <h2>IMS</h2>
+            <p>Inventory System</p>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/products" class="nav-link">Products</a>
+            <a href="/stock" class="nav-link">Stock</a>
+            <a href="/sales" class="nav-link">Sales</a>
+            <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/view records" class="nav-link">View Records</a>
+            <a href="/reports" class="nav-link">Reports</a>
+            <a href="/financial-review" class="nav-link">Financial Review</a>
+            <a href="/backups" class="nav-link">Backups</a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <a href="/logout" class="logout-link">Logout</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <div>
+                <h1>Financial Review</h1>
+                <p>Administrator-only financial performance.</p>
+            </div>
+
+            <div class="user-info">
+                <strong>{{ username }}</strong>
+                <span>{{ role }}</span>
+            </div>
+        </header>
+
+        <section class="welcome-section">
+            <h2>Financial Summary</h2>
+            <p>Review recorded sales and associated inventory costs for a selected period.</p>
+        </section>
+
+        <section class="dashboard-section">
+            <div class="section-card inventory-summary-card">
+                <h2>Inventory Summary</h2>
+
+                <form method="GET" action="/financial-review" class="financial-filter-form">
+                    <div class="form-group">
+                        <label for="period">Date Range</label>
+                        <select name="period" id="period">
+                            <option value="all" {% if period == "all" %}selected{% endif %}>All Records</option>
+                            <option value="today" {% if period == "today" %}selected{% endif %}>Today</option>
+                            <option value="yesterday" {% if period == "yesterday" %}selected{% endif %}>Yesterday</option>
+                            <option value="this_week" {% if period == "this_week" %}selected{% endif %}>This Week</option>
+                            <option value="last_week" {% if period == "last_week" %}selected{% endif %}>Last Week</option>
+                            <option value="this_month" {% if period == "this_month" %}selected{% endif %}>This Month</option>
+                            <option value="last_month" {% if period == "last_month" %}selected{% endif %}>Last Month</option>
+                            <option value="specific_date" {% if period == "specific_date" %}selected{% endif %}>Specific Date</option>
+                            <option value="custom" {% if period == "custom" %}selected{% endif %}>Custom Date Range</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Specific Date</label>
+                        <input type="date" name="date" id="date" value="{{ request.args.get('date', '') }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="start_date">Start Date</label>
+                        <input type="date" name="start_date" id="start_date" value="{{ request.args.get('start_date', '') }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="end_date">End Date</label>
+                        <input type="date" name="end_date" id="end_date" value="{{ request.args.get('end_date', '') }}">
+                    </div>
+
+                    <button type="submit" class="btn">Apply Period</button>
+                    <a href="/financial-review" class="btn">Clear Filters</a>
+                </form>
+            </div>
+        </section>
+
+        <section class="dashboard-cards">
+            <div class="dashboard-card">
+                <h3>Sales Revenue</h3>
+                <p class="card-value">₦{{ "{:,.2f}".format(revenue) }}</p>
+            </div>
+
+            <div class="dashboard-card">
+                <h3>Cost of Goods Sold</h3>
+                <p class="card-value">₦{{ "{:,.2f}".format(cost_of_goods_sold) }}</p>
+            </div>
+
+            <div class="dashboard-card {% if gross_profit < 0 %}status-danger{% endif %}">
+                <h3>Gross Profit / Loss</h3>
+                <p class="card-value">₦{{ "{:,.2f}".format(gross_profit) }}</p>
+            </div>
+
+            <div class="dashboard-card">
+                <h3>Stock-In Value</h3>
+                <p class="card-value">₦{{ "{:,.2f}".format(stock_in_value) }}</p>
+            </div>
+
+            <div class="dashboard-card">
+                <h3>Number of Sales</h3>
+                <p class="card-value">{{ sales_count }}</p>
+            </div>
+        </section>
+
+        <section class="dashboard-section">
+            <div class="section-card">
+                <h2>Product Profitability</h2>
+
+                {% if profitability_rows %}
+                    <div class="table-container">
+                        <table class="products-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity Sold</th>
+                                    <th>Revenue</th>
+                                    <th>Cost of Goods Sold</th>
+                                    <th>Gross Profit / Loss</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for item in profitability_rows %}
+                                    <tr>
+                                        <td>{{ item["product_name"] }}</td>
+                                        <td>{{ item["quantity"] }}</td>
+                                        <td>₦{{ "{:,.2f}".format(item["revenue"]) }}</td>
+                                        <td>₦{{ "{:,.2f}".format(item["cost"]) }}</td>
+                                        <td>₦{{ "{:,.2f}".format(item["gross_profit"]) }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p>No sales were recorded for this period.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>

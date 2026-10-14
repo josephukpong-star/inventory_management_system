@@ -24,7 +24,13 @@
             <a href="/stock" class="nav-link">Stock</a>
             <a href="/sales" class="nav-link">Sales</a>
             <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/view-records" class="nav-link">View Records</a>
             <a href="/reports" class="nav-link active">Reports</a>
+
+            {% if is_admin %}
+                <a href="/financial-review" class="nav-link">Financial Review</a>
+            {% endif %}
+
             <a href="/backups" class="nav-link">Backups</a>
         </nav>
 
@@ -33,7 +39,6 @@
         </div>
 
     </aside>
-
 
     <main class="main-content">
 
@@ -51,7 +56,6 @@
 
         </header>
 
-
         <section class="welcome-section">
 
             <h2>Inventory Reports</h2>
@@ -62,62 +66,63 @@
 
         </section>
 
-
         <section class="dashboard-section">
 
-    <div class="section-card">
+            <div class="section-card inventory-summary-card">
 
-        <h2>Inventory Summary</h2>
+                <h2>Inventory Summary</h2>
 
-        <div class="stats-grid">
+                <div class="stats-grid">
 
-            <div class="stat-card">
-                <span class="stat-label">Total Products</span>
-                <strong class="stat-value">
-                    {{ report_data["total_products"] }}
-                </strong>
+                    <div class="stat-card">
+                        <span class="stat-label">Total Products</span>
+                        <strong class="stat-value">
+                            {{ report_data["total_products"] }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-card">
+                        <span class="stat-label">Total Quantity</span>
+                        <strong class="stat-value">
+                            {{ report_data["total_quantity"] }}
+                        </strong>
+                    </div>
+
+                    {% if is_admin and report_data.get("total_value") is not none %}
+                    <div class="stat-card">
+                        <span class="stat-label">Inventory Value</span>
+                        <strong class="stat-value">
+                            ₦{{ "{:,.2f}".format(report_data.get("total_value", 0)) }}
+                        </strong>
+                    </div>
+                    {% endif %}
+
+                    <div class="stat-card">
+                        <span class="stat-label">Low Stock</span>
+                        <strong class="stat-value">
+                            {{ report_data["low_stock"] }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-card">
+                        <span class="stat-label">Out of Stock</span>
+                        <strong class="stat-value">
+                            {{ report_data["out_of_stock"] }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-card">
+                        <span class="stat-label">Stock Health</span>
+                        <strong class="stat-value">
+                            {{ report_data["stock_health"] }}%
+                        </strong>
+                    </div>
+
+                </div>
+
             </div>
 
-            <div class="stat-card">
-                <span class="stat-label">Total Quantity</span>
-                <strong class="stat-value">
-                    {{ report_data["total_quantity"] }}
-                </strong>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-label">Inventory Value</span>
-                <strong class="stat-value">
-                    ₦{{ "{:,.2f}".format(report_data["total_value"]) }}
-                </strong>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-label">Low Stock</span>
-                <strong class="stat-value">
-                    {{ report_data["low_stock"] }}
-                </strong>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-label">Out of Stock</span>
-                <strong class="stat-value">
-                    {{ report_data["out_of_stock"] }}
-                </strong>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-label">Stock Health</span>
-                <strong class="stat-value">
-                    {{ report_data["stock_health"] }}%
-                </strong>
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
+        </section>
 
     </main>
 

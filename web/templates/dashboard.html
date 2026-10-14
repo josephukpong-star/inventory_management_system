@@ -41,11 +41,19 @@
                 Transactions
             </a>
 
+            <a href="/view-records" class="nav-link">
+                View Records
+            </a>
+
             <a href="/reports" class="nav-link">
                 Reports
             </a>
 
-            <a href="backups" class="nav-link">
+            <a href="/financial-review" class="nav-link">
+                Financial Review
+            </a>
+
+            <a href="/backups" class="nav-link">
                 Backups
             </a>
 
@@ -109,67 +117,63 @@
                 <p class="card-value">{{ dashboard_data["low_stock"] }}</p>
             </div>
 
+            {% if is_admin %}
             <div class="dashboard-card">
                 <h3>Inventory Value</h3>
-                <p class="card-value">₦{{ "{:,.2f}".format(dashboard_data["total_value"]) }}</p>
-            </div>
-
-            <div class="dashboard-card status-danger">
+                <p class="card-value">
+                    ₦{{ "{:,.2f}".format(dashboard_data.get("total_value", 0) or 0) }}
+                </p>
+             </div>
+              {% endif %}
+              <div class="dashboard-card status-danger">
                 <h3>Out of Stock</h3>
                 <p class="card-value">{{ dashboard_data["out_of_stock"] }}</p>
             </div>
-
             <div class="dashboard-card status-health">
                 <h3>Stock Health</h3>
                 <p class="card-value">
                     {{ "%.2f"|format(dashboard_data["stock_health"]) }}%
                 </p>
             </div>
+         </section>
 
-        </section>
-
-                <!-- Financial Summary -->
-        <section class="financial-summary">
-
+        <!-- Financial Summary: administrators only -->
+         {% if is_admin %}
+         <section class="financial-summary">
             <h2>Financial Overview</h2>
-
             <div class="dashboard-cards">
-
                 <div class="dashboard-card">
                     <h3>Stock-In Value</h3>
                     <p class="card-value">
-                        ₦{{ "{:,.2f}".format(dashboard_data["stock_in_value"]) }}
+                        ₦{{ "{:,.2f}".format(dashboard_data.get("stock_in_value", 0) or 0) }}
                     </p>
                     <small>Total purchase cost of stock received</small>
-                </div>
-
-                <div class="dashboard-card">
+                 </div>
+                 <div class="dashboard-card">
                     <h3>Sales Revenue</h3>
                     <p class="card-value">
-                        ₦{{ "{:,.2f}".format(dashboard_data["stock_out_sales_value"]) }}
+                        ₦{{ "{:,.2f}".format(dashboard_data.get("stock_out_sales_value", 0) or 0) }}
                     </p>
                     <small>Total value of recorded sales</small>
                 </div>
-
                 <div class="dashboard-card">
                     <h3>Cost of Goods Sold</h3>
                     <p class="card-value">
-                        ₦{{ "{:,.2f}".format(dashboard_data["cost_of_goods_sold"]) }}
+                        ₦{{ "{:,.2f}".format(dashboard_data.get("cost_of_goods_sold", 0) or 0) }}
                     </p>
                     <small>Inventory cost of products sold</small>
                 </div>
-
                 <div class="dashboard-card">
                     <h3>Gross Profit</h3>
                     <p class="card-value">
-                        ₦{{ "{:,.2f}".format(dashboard_data["gross_profit"]) }}
+                        ₦{{ "{:,.2f}".format(dashboard_data.get("gross_profit", 0) or 0) }}
                     </p>
                     <small>Sales revenue minus cost of goods sold</small>
                 </div>
-
             </div>
-
         </section>
+        {% endif %}
+    </section>
 
 
         <!-- Dashboard Sections -->
@@ -192,9 +196,16 @@
                     — {{ transaction["quantity"] }} units
                 </span>
 
+            {% if is_admin %}
                 <span>
-                    ₦{{ "{:,.2f}".format(transaction["total_value"]) }}
+                    ₦{{ "{:,.2f}".format(transaction.get("total_value", 0) or 0) }}
                 </span>
+            {% elif transaction.get("type") == "STOCK-OUT"
+                and transaction.get("reason") == "Sale" %}
+                <span>
+                    ₦{{ "{:,.2f}".format(transaction.get("sales_value", 0) or 0) }}
+                </span>
+            {% endif %}
 
             </div>
 
