@@ -37,6 +37,60 @@ def test_staff_cannot_access_financial_review(client):
     response = client.get("/financial-review")
     assert response.status_code == 403
 
+def test_staff_can_access_dashboard(client):
+    login_as(client, "test_staff", "Staff")
+    response = client.get("/dashboard")
+    assert response.status_code == 200
+
+def test_staff_can_access_products_page(client):
+    login_as(client, "test_staff", "Staff")
+    response = client.get("/products")
+    assert response.status_code == 200
+
+def test_staff_can_access_stock_page(client):
+    login_as(client, "test_staff", "Staff")
+    response = client.get("/stock")
+    assert response.status_code == 200
+
+def test_staff_can_access_transactions_page(client):
+    login_as(client, "test_staff", "Staff")
+    response = client.get("/transactions")
+    assert response.status_code == 200
+
+def test_staff_can_access_reports_page(client):
+    login_as(client, "test_staff", "Staff")
+    response = client.get("/reports")
+    assert response.status_code == 200
+
+def test_staff_can_access_sales_page(client):
+    login_as(client, "test_staff", "Staff")
+    response = client.get("/sales")
+    assert response.status_code == 200
+
+def test_staff_can_access_backups_page(client):
+    login_as(client, "test_staff", "Staff")
+    response = client.get("/backups")
+    assert response.status_code == 200
+
+def test_staff_cannot_access_staff_management(client):
+    login_as(client, "test_staff", "Staff")
+    response = client.get("/staff")
+    assert response.status_code == 403
+
+def test_staff_cannot_create_staff_account(client):
+    login_as(client, "test_staff", "Staff")
+    response = client.post("/staff/add", data={"username": "another_staff", "password": "SecurePass123"},)
+    assert response.status_code == 403
+
+def test_admin_can_access_staff_management(client):
+    login_as(client, "test_admin", "Admin")
+    response = client.get("/staff")
+    assert response.status_code == 200
+
+def test_unauthenticated_user_cannot_access_staff_management(client):
+    response = client.get("/staff")
+    assert response.status_code == 302
+
 def test_staff_cannot_restore_backup(client):
     login_as(client, "test_staff", "Staff")
     response = client.post("/restore-backup", data={"backup_file": "test_backup.json"},)

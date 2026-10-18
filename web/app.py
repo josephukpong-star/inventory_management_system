@@ -4,7 +4,7 @@ from collections import defaultdict
 from functools import wraps
 from dotenv import load_dotenv
 import os
-from web.auth import authenticate_user
+from web.auth import authenticate_user, create_staff_user, load_users
 from app.inventory_service import InventoryService
 from app.models import Product
 from app.config import DEFAULT_INVENTORY_FILE, DEFAULT_BACKUP_DIRECTORY
@@ -12,7 +12,13 @@ from app.config import DEFAULT_INVENTORY_FILE, DEFAULT_BACKUP_DIRECTORY
 load_dotenv()
 
 app = Flask(__name__)
+
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
+
+if not app.secret_key:
+    raise RuntimeError("FLASK_SECRET_KEY is missing. Configure it in your .env file.")
+
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax", SESSION_COOKIE_SECURE=os.getenv("FLASK_HTTPS_ONLY", "False").casefold() in {"true", "1", "yes"},)
 
 def is_admin_user():
     """Return True only for an authenticated administrator."""
@@ -176,6 +182,30 @@ def login():
         return redirect(url_for("dashboard"))
 
     return "Invalid username or password."
+@app.route("/staff")
+@admin_required
+def staff():
+    """Display account usernames and roles without exposing password hashes."""
+    users = load_users()
+    safe_users = [{"username": user.get("username", ""), "role": user.get("role", "Staff"),} for user in users]
+
+    return render_template("staff.html", users=safe_users)
+
+
+@app.route("/staff/add", methods=["POST"])
+@admin_required
+def add_staff():
+    """Create a staff account from the administrator's form."""
+    username = request.form.get("username", "")
+    password = request.form.get("password", "")
+
+    try:
+        create_staff_user(username, password)
+        flash("Staff account created successfully.", "success")
+    except ValueError as error:
+        flash(str(error), "error")
+
+    return redirect(url_for("staff"))
 
 @app.route("/dashboard")
 @login_required

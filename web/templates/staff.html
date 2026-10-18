@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Account Management - IMS</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+<style>
+    .staff-page {
+        margin-left: 240px;
+        padding: 30px;
+        box-sizing: border-box;
+        min-width: 0;
+    }
+
+    .staff-header {
+        margin-bottom: 25px;
+    }
+
+    .staff-header h1 {
+        margin-bottom: 8px;
+    }
+
+    .staff-section {
+        background: #ffffff;
+        padding: 24px;
+        margin-bottom: 24px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+    }
+
+    .staff-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .staff-form label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+    }
+
+    .staff-form input {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+    }
+
+    .staff-form button {
+        grid-column: 1 / -1;
+        padding: 12px 18px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .staff-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .staff-table th,
+    .staff-table td {
+        text-align: left;
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .staff-message {
+        padding: 12px;
+        margin-bottom: 12px;
+        border-radius: 6px;
+    }
+
+    .staff-message.success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .staff-message.error {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            position: static;
+            width: 100%;
+            height: auto;
+        }
+
+        .sidebar-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .nav-link {
+            margin-bottom: 0;
+        }
+
+        .staff-page {
+            margin-left: 0;
+            padding: 20px 16px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .staff-form {
+            grid-template-columns: 1fr;
+        }
+
+        .staff-section {
+            padding: 16px;
+            overflow-x: auto;
+        }
+
+        .staff-form button {
+            grid-column: 1;
+        }
+    }
+</style>
+```
+
+</head>
+
+<body>
+
+```
+<!-- Sidebar -->
+<aside class="sidebar">
+
+    <div class="sidebar-brand">
+        <h2>IMS</h2>
+        <p>Inventory System</p>
+    </div>
+
+    <nav class="sidebar-nav">
+
+        <a href="{{ url_for('dashboard') }}" class="nav-link">
+            Dashboard
+        </a>
+
+        <a href="{{ url_for('products') }}" class="nav-link">
+            Products
+        </a>
+
+        <a href="{{ url_for('stock') }}" class="nav-link">
+            Stock
+        </a>
+
+        <a href="{{ url_for('sales') }}" class="nav-link">
+            Sales
+        </a>
+
+        <a href="{{ url_for('transactions') }}" class="nav-link">
+            Transactions
+        </a>
+
+        <a href="{{ url_for('view_records') }}" class="nav-link">
+            View Records
+        </a>
+
+        <a href="{{ url_for('reports') }}" class="nav-link">
+            Reports
+        </a>
+
+        <a href="{{ url_for('financial_review') }}" class="nav-link">
+            Financial Review
+        </a>
+
+        <a href="{{ url_for('backups') }}" class="nav-link">
+            Backups
+        </a>
+
+        {% if is_admin %}
+        <a href="{{ url_for('staff') }}" class="nav-link active" aria-current="page">
+            Staff Management
+        </a>
+        {% endif %}
+
+    </nav>
+
+    <div class="sidebar-bottom">
+        <a href="{{ url_for('logout') }}" class="logout-link">
+            Logout
+        </a>
+    </div>
+
+</aside>
+
+<!-- Main Content -->
+<main class="staff-page">
+
+    <header class="staff-header">
+        <h1>Staff Account Management</h1>
+        <p>View existing accounts and create staff accounts.</p>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="staff-message {{ category }}" role="status">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="staff-section">
+        <h2>Create Staff Account</h2>
+
+        <form class="staff-form" method="POST"
+              action="{{ url_for('add_staff') }}">
+
+            <div>
+                <label for="username">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    minlength="3"
+                    maxlength="30"
+                    pattern="[A-Za-z0-9_-]+"
+                    autocomplete="off"
+                    required
+                >
+            </div>
+
+            <div>
+                <label for="password">Temporary Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    minlength="8"
+                    autocomplete="new-password"
+                    required
+                >
+            </div>
+
+            <button type="submit">Create Staff Account</button>
+        </form>
+    </section>
+
+    <section class="staff-section">
+        <h2>Existing Accounts</h2>
+
+        <table class="staff-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.role }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="2">No accounts found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+</main>
+
+</body>
+</html>

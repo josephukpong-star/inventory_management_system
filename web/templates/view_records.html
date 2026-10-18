@@ -28,6 +28,11 @@
             {% endif %}
 
             <a href="/backups" class="nav-link">Backups</a>
+             {% if is_admin %}
+            <a href="/staff" class="nav-link">
+                Staff Management
+            </a>
+            {% endif %}
         </nav>
 
         <div class="sidebar-bottom">

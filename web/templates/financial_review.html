@@ -24,6 +24,11 @@
             <a href="/reports" class="nav-link">Reports</a>
             <a href="/financial-review" class="nav-link">Financial Review</a>
             <a href="/backups" class="nav-link">Backups</a>
+             {% if is_admin %}
+            <a href="/staff" class="nav-link">
+                Staff Management
+            </a>
+            {% endif %}
         </nav>
 
         <div class="sidebar-bottom">
