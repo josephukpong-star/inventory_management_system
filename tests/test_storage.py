@@ -1,4 +1,5 @@
 ﻿import json
+import os
 import pytest
 from app.models import Product
 from app.storage import (save_products, load_products, save_inventory_data, load_inventory_data, save_inventory_report, backup_inventory_data, create_inventory_backup, restore_inventory_data,)
@@ -267,3 +268,56 @@ def test_restore_inventory_backup_file_not_found(tmp_path):
     source_file = tmp_path / "inventory.json"
     with pytest.raises(FileNotFoundError):
         restore_inventory_backup(backup_file, source_file)
+
+def test_save_and_load_product_with_configurable_units(tmp_path):
+    file_path = tmp_path / "inventory.json"
+
+    product = Product(101, "Eggs", 150, 300, "Food", base_unit="piece", purchase_units=[{"name": "crate", "base_quantity": 30},], selling_units=[{"name": "crate", "base_quantity": 30}, {"name": "half crate", "base_quantity": 15}, {"name": "piece", "base_quantity": 1},],)
+
+    save_inventory_data([product], [], file_path)
+
+    loaded_products, loaded_transactions = load_inventory_data(file_path)
+    loaded_product = loaded_products[0]
+
+    assert loaded_product.base_unit == "piece"
+    assert loaded_product.quantity == 300
+    assert loaded_product.purchase_units == [{"name": "crate", "base_quantity": 30},]
+    assert loaded_product.selling_units == [{"name": "crate", "base_quantity": 30}, {"name": "half crate", "base_quantity": 15}, {"name": "piece", "base_quantity": 1},]
+    assert loaded_transactions == []
+
+def test_legacy_product_without_selling_price_loads_correctly(tmp_path):
+    file_path = tmp_path / "legacy_inventory.json"
+
+    legacy_data = {"products": [{"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Electronics",}], "transactions": [],}
+
+    file_path.write_text(json.dumps(legacy_data), encoding="utf-8")
+
+    loaded_products, loaded_transactions = load_inventory_data(file_path)
+
+    product = loaded_products[0]
+
+    assert product.product_id == 1
+    assert product.price == 850000
+    assert product.selling_price == 850000
+    assert product.quantity == 5
+    assert loaded_transactions == []
+
+def test_save_inventory_data_preserves_original_file_if_replace_fails(tmp_path, monkeypatch):
+    from app.storage import save_inventory_data
+
+    inventory_file = tmp_path / "inventory.json"
+    original_content = '{"original": "data"}'
+    inventory_file.write_text(original_content, encoding="utf-8")
+
+    def fail_replace(source, destination):
+        raise OSError("Simulated file replacement failure")
+
+    monkeypatch.setattr(os, "replace", fail_replace)
+
+    with pytest.raises(OSError, match="Simulated file replacement failure"):
+        save_inventory_data(products=[], transactions=[], file_path=inventory_file,)
+
+    assert inventory_file.read_text(encoding="utf-8") == original_content
+
+    temporary_files = list(tmp_path.glob(".inventory.json.*.tmp"))
+    assert temporary_files == []

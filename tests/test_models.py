@@ -23,3 +23,32 @@ def test_product_to_dict_includes_category():
     product = Product(1, "Laptop", 850000, 10, "Electronics")
     result = product.to_dict()
     assert result["category"] == "Electronics"
+
+def test_create_product_with_configurable_units():
+    product = Product(101, "Eggs", 150, 300, "Food", base_unit="piece", purchase_units=[{"name": "crate", "base_quantity": 30},], selling_units=[{"name": "crate", "base_quantity": 30}, {"name": "half crate", "base_quantity": 15}, {"name": "piece", "base_quantity": 1},],)
+
+    assert product.base_unit == "piece"
+    assert product.quantity == 300
+    assert product.purchase_units == [{"name": "crate", "base_quantity": 30},]
+    assert product.selling_units == [{"name": "crate", "base_quantity": 30}, {"name": "half crate", "base_quantity": 15}, {"name": "piece", "base_quantity": 1},]
+
+def test_product_to_dict_includes_configurable_units():
+    product = Product(101, "Eggs", 150, 300, base_unit="piece", purchase_units=[{"name": "crate", "base_quantity": 30},], selling_units=[{"name": "half crate", "base_quantity": 15}, {"name": "piece", "base_quantity": 1},],)
+
+    result = product.to_dict()
+
+    assert result["base_unit"] == "piece"
+    assert result["purchase_units"] == [{"name": "crate", "base_quantity": 30},]
+    assert result["selling_units"] == [{"name": "half crate", "base_quantity": 15},{"name": "piece", "base_quantity": 1},]
+
+def test_product_rejects_zero_purchase_conversion_factor():
+    with pytest.raises(ValueError, match="greater than zero"):
+        Product(101, "Eggs", 150, 300, base_unit="piece", purchase_units=[{"name": "crate", "base_quantity": 0},],)
+
+def test_product_rejects_negative_selling_conversion_factor():
+    with pytest.raises(ValueError, match="greater than zero"):
+        Product(101, "Eggs", 150, 300, base_unit="piece", selling_units=[{"name": "half crate", "base_quantity": -15},],)
+
+def test_product_rejects_duplicate_purchase_unit_names():
+    with pytest.raises(ValueError, match="Duplicate purchase unit name"):
+        Product(101, "Eggs", 150, 300, base_unit="piece", purchase_units=[{"name": "crate", "base_quantity": 30}, {"name": "CRATE", "base_quantity": 30},],)

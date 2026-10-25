@@ -129,6 +129,45 @@
 
         </section>
 
+        {% if is_admin %}
+
+        <section class="dashboard-section">
+
+            <div class="section-card financial-summary-card">
+
+                <h2>Financial Summary</h2>
+
+                <div class="stats-grid">
+
+                    <div class="stat-card">
+                        <span class="stat-label">Sales Revenue</span>
+                        <strong class="stat-value">
+                            ₦{{ "{:,.2f}".format(report_data.get("stock_out_sales_value", 0)) }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-card">
+                        <span class="stat-label">Cost of Goods Sold</span>
+                        <strong class="stat-value">
+                            ₦{{ "{:,.2f}".format(report_data.get("cost_of_goods_sold", 0)) }}
+                        </strong>
+                    </div>
+
+                    <div class="stat-card">
+                        <span class="stat-label">Gross Profit / Loss</span>
+                        <strong class="stat-value">
+                            ₦{{ "{:,.2f}".format(report_data.get("gross_profit", 0)) }}
+                        </strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
     </main>
 
 </body>

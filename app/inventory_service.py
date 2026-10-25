@@ -1,3 +1,4 @@
+﻿import math
 from datetime import datetime
 from app.config import (DEFAULT_LOW_STOCK_THRESHOLD, DEFAULT_REPORT_TITLE, DEFAULT_CURRENCY_SYMBOL,)
 from app.models import Product
@@ -74,60 +75,176 @@ class InventoryService:
             inventory_cost = product.price * quantity
         sales_value = 0
         self.transactions.append({"product_id": product.product_id, "product_name": product.name, "price": price, "type": transaction_type, "quantity": quantity, "total_value": price * quantity, "inventory_cost": inventory_cost, "sales_value": sales_value, "timestamp": datetime.now().isoformat(),})
-    def stock_in(self, product_id, quantity, price=None):
-        self._validate_product_id(product_id)
-        self._validate_stock_quantity(quantity, "Stock-in")
+
+    def _convert_to_base_units(self, product, quantity, unit, unit_type):
+        # Preserve the existing behavior when no package is specified.
+        if unit is None:
+            self._validate_stock_quantity(quantity, unit_type)
+            return quantity, product.base_unit, 1
+
+        if isinstance(quantity, bool) or not isinstance(quantity, (int, float)):
+            raise ValueError(f"{unit_type} quantity must be a number")
+
+        if not math.isfinite(quantity):
+            raise ValueError(f"{unit_type} quantity must be finite")
+
         if quantity <= 0:
+            raise ValueError(f"{unit_type} quantity must be greater than zero")
+
+        if not isinstance(unit, str) or not unit.strip():
+            raise ValueError("Unit must be a non-empty string")
+
+        # Stock-in uses purchase units; stock-out uses selling units.
+        units = (product.purchase_units if unit_type == "Stock-in" else product.selling_units)
+
+        selected_unit = next((item for item in units if item["name"].casefold() == unit.strip().casefold()), None,)
+
+        if selected_unit is None:
+            raise ValueError(f"Invalid {unit_type.lower()} unit: {unit}")
+
+        factor = selected_unit["base_quantity"]
+        base_quantity = quantity * factor
+
+        # Inventory quantities must be whole base units.
+        if isinstance(base_quantity, float) and base_quantity.is_integer():
+            base_quantity = int(base_quantity)
+
+        if isinstance(base_quantity, bool) or not isinstance(base_quantity, int):
+            raise ValueError("Converted quantity must be a whole number of base units")
+
+        return base_quantity, selected_unit["name"], factor
+
+    def stock_in(self, product_id, quantity, price=None, unit=None):
+        self._validate_product_id(product_id)
+
+        # Preserve legacy quantity validation before product lookup.
+        if unit is None:
+            self._validate_stock_quantity(quantity, "Stock-in")
+
+            if quantity <= 0:
+                raise ValueError("Stock-in quantity must be greater than zero")
+
+        product = self.get_product(product_id)
+
+        base_quantity, selected_unit, factor = self._convert_to_base_units( product, quantity, unit, "Stock-in",)
+        if base_quantity <= 0:
             raise ValueError("Stock-in quantity must be greater than zero")
+
         if price is not None:
             if isinstance(price, bool) or not isinstance(price, (int, float)):
                 raise ValueError("Stock-in price must be a number")
+
+            if not math.isfinite(price):
+                raise ValueError("Stock-in price must be finite")
+
             if price < 0:
                 raise ValueError("Stock-in price cannot be negative")
-        product = self.get_product(product_id)
+
         old_quantity = product.quantity
         old_cost = product.price
-        purchase_cost = old_cost if price is None else price
-        new_quantity = old_quantity + quantity
-        new_average_cost = ((old_quantity * old_cost) + (quantity * purchase_cost)) / new_quantity
-        self.update_quantity(product_id, quantity)
+
+        # Determine the purchase cost per base unit.
+        if unit is None:
+            purchase_cost_per_base_unit = (old_cost if price is None else price)
+            total_purchase_cost = purchase_cost_per_base_unit * base_quantity
+            entered_price = purchase_cost_per_base_unit
+        else:
+            entered_price = old_cost * factor if price is None else price
+            purchase_cost_per_base_unit = entered_price / factor
+            total_purchase_cost = entered_price * quantity
+
+        new_quantity = old_quantity + base_quantity
+
+        new_average_cost = ((old_quantity * old_cost) + total_purchase_cost) / new_quantity
+
+        self.update_quantity(product_id, base_quantity)
         product.price = new_average_cost
-        self._record_transaction(product, "STOCK-IN", quantity, price=purchase_cost, inventory_cost=purchase_cost * quantity,)
-    def stock_out(self, product_id, quantity, price=None, reason="Other"):
+
+        self._record_transaction(product, "STOCK-IN", base_quantity, price=purchase_cost_per_base_unit, inventory_cost=total_purchase_cost,)
+        transaction = self.transactions[-1]
+
+        # Preserve the original purchase details.
+        transaction["entered_quantity"] = quantity
+        transaction["unit"] = selected_unit
+        transaction["conversion_factor"] = factor
+        transaction["base_quantity"] = base_quantity
+        transaction["entered_price"] = entered_price
+        transaction["total_value"] = total_purchase_cost
+
+    def stock_out(self, product_id, quantity, price=None, reason="Other", unit=None,):
         self._validate_product_id(product_id)
-        self._validate_stock_quantity(quantity, "Stock-out")
-        if quantity <= 0:
-            raise ValueError("Stock-out quantity must be greater than zero")
-        if reason == "Sale" and price is None:
+
+        valid_reasons = {"Sale", "Damaged Goods", "Internal Use", "Gift/Free Issue", "Other",}
+
+        if reason not in valid_reasons:
+            raise ValueError("Invalid stock-out reason")
+
+        if reason == "Sale" and price is None and unit is None:
             raise ValueError("Selling price is required for a sale")
+
         if price is not None:
             if isinstance(price, bool) or not isinstance(price, (int, float)):
                 raise ValueError("Stock-out price must be a number")
+
+            if not math.isfinite(price):
+                raise ValueError("Stock-out price must be finite")
+
             if price < 0:
                 raise ValueError("Stock-out price cannot be negative")
-        valid_reasons = {"Sale", "Damaged Goods", "Internal Use", "Gift/Free Issue", "Other",}
-        if reason not in valid_reasons:
-            raise ValueError("Invalid stock-out reason")
+
         product = self.get_product(product_id)
-        inventory_cost = product.price * quantity
-        self.update_quantity(product_id, -quantity)
-        self._record_transaction(product, "STOCK-OUT", quantity, price=price,)
-        transaction = self.transactions[-1] 
-        transaction["reason"] = reason 
-        transaction["inventory_cost"] = inventory_cost 
-        transaction["sales_value"] = (price * quantity if reason == "Sale" and price is not None else 0)
+
+        base_quantity, selected_unit, factor = self._convert_to_base_units(product, quantity, unit, "Stock-out",)
+        if base_quantity <= 0:
+            raise ValueError("Stock-out quantity must be greater than zero")
+
+        inventory_cost = product.price * base_quantity
+
+        # Preserve the original base-unit behavior.
+        if unit is None:
+            transaction_price = price
+            sales_value = (price * base_quantity if reason == "Sale" and price is not None else 0)
+        else:
+           transaction_price = ( product.selling_price * factor if price is None else price )
+           sales_value = ( transaction_price * quantity if reason == "Sale" else 0 )
+
+        # Reject insufficient stock before recording a transaction.
+        self.update_quantity(product_id, -base_quantity)
+
+        # Record every valid stock-out, whether or not a package was selected.
+        self._record_transaction(product, "STOCK-OUT", base_quantity, price=transaction_price, inventory_cost=inventory_cost,)
+
+        transaction = self.transactions[-1]
+        transaction["reason"] = reason
+        transaction["inventory_cost"] = inventory_cost
+        transaction["sales_value"] = sales_value
+
+        # Preserve package details for package-based transactions.
+        transaction["entered_quantity"] = quantity
+        transaction["unit"] = selected_unit
+        transaction["conversion_factor"] = factor
+        transaction["base_quantity"] = base_quantity
+        transaction["entered_price"] = transaction_price
+        transaction["total_value"] = (sales_value if reason == "Sale" else inventory_cost)
     def update_product(self, product_id, name=None, price=None, category=None):
         product = self.get_product(product_id)
         if name is not None:
             if not name or not name.strip():
                 raise ValueError("Product name cannot be empty")
             product.name = name.strip().title()
+
         if price is not None:
             if isinstance(price, bool) or not isinstance(price, (int, float)):
                 raise ValueError("Price must be a number")
+
+            if not math.isfinite(price):
+                raise ValueError("Price must be finite")
+
             if price < 0:
                 raise ValueError("Price cannot be negative")
+
             product.price = price
+
         if category is not None:
             if not category or not category.strip():
                 raise ValueError("Category cannot be empty")
@@ -151,7 +268,7 @@ class InventoryService:
             if product.product_id == product_id:
                 self.removed_products.remove(product)
                 self.deleted_record_counter += 1
-                deleted_record = {"record_id": self.deleted_record_counter, "product": product.to_dict(), "deleted_at": datetime.now().isoformat(), "action": "PERMANENT_DELETE"}   
+                deleted_record = {"record_id": self.deleted_record_counter, "product": product.to_dict(), "deleted_at": datetime.now().isoformat(), "action": "PERMANENT_DELETE"}
                 self.deleted_products.append(deleted_record)
                 return
         raise ValueError("Removed product not found")
@@ -314,6 +431,7 @@ class InventoryService:
     def _validate_product_id(self, product_id):
         if isinstance(product_id, bool) or not isinstance(product_id, int):
             raise ValueError("Product ID must be an integer")
+
     def _validate_stock_quantity(self, quantity, transaction_type):
         if isinstance(quantity, bool) or not isinstance(quantity, int):
             raise ValueError(f"{transaction_type} quantity must be an integer")
@@ -360,8 +478,8 @@ class InventoryService:
         self._validate_low_stock_threshold(low_stock_threshold)
         summary = self.get_inventory_summary(low_stock_threshold)
         stock_in_value = sum(transaction.get("inventory_cost", 0) for transaction in self.transactions if transaction.get("type") == "STOCK-IN")
-        stock_out_sales_value = sum(transaction.get("sales_value", 0) for transaction in self.transactions if transaction.get("type") == "STOCK-OUT" and transaction.get("reason") == "Sale")
-        cost_of_goods_sold = sum(transaction.get("inventory_cost", 0) for transaction in self.transactions if transaction.get("type") == "STOCK-OUT" and transaction.get("reason") == "Sale")
+        stock_out_sales_value = sum(transaction.get("sales_value", 0) for transaction in self.transactions if transaction.get("type") == "STOCK-OUT" and transaction.get("reason") == "Sale" and not transaction.get("cancelled", False))
+        cost_of_goods_sold = sum(transaction.get("inventory_cost", 0) for transaction in self.transactions if transaction.get("type") == "STOCK-OUT" and transaction.get("reason") == "Sale" and not transaction.get("cancelled", False))
         gross_profit = stock_out_sales_value - cost_of_goods_sold
         stock_counts = self.get_stock_status_counts(low_stock_threshold)
         products_by_value = self.get_products_by_inventory_value()

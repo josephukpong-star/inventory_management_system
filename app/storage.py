@@ -1,4 +1,6 @@
 import json
+import os
+import tempfile
 from pathlib import Path
 from app.models import Product
 
@@ -9,7 +11,7 @@ def _copy_json_file(source_file_path, destination_file_path):
     with open(destination_file_path, "w") as destination_file:
         json.dump(data, destination_file, indent=4)
 def _product_from_dict(item):
-    return Product(item["product_id"], item["name"], item["price"], item["quantity"], item.get("category", "Uncategorized"))
+    return Product(item["product_id"], item["name"], item["price"], item["quantity"], item.get("category", "Uncategorized"), base_unit=item.get("base_unit", "unit"), purchase_units=item.get("purchase_units"), selling_units=item.get("selling_units"), selling_price=item.get("selling_price"),)
 def save_products(products, file_path):
     data = [product.to_dict() for product in products]
     with open(file_path, "w") as file:
@@ -25,10 +27,37 @@ def load_products(file_path):
     if isinstance(data, dict):
         data = data.get("products", [])
     return [_product_from_dict(item) for item in data]
+
 def save_inventory_data(products, transactions, file_path, removed_products=None, deleted_products=None, deleted_record_counter=0,):
     data = {"products": [product.to_dict() for product in products], "transactions": transactions, "removed_products": [product.to_dict() for product in (removed_products or [])], "deleted_products": deleted_products or [], "deleted_record_counter": deleted_record_counter,}
-    with open(file_path, "w") as file:
-        json.dump(data, file, indent=4)
+
+    # Keep the temporary file in the same directory as the original.
+    file_path = os.fspath(file_path)
+    directory = os.path.dirname(os.path.abspath(file_path))
+    filename = os.path.basename(file_path)
+
+    temp_path = None
+
+    try:
+        # Create a temporary file in the destination directory.
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=directory, prefix=f".{filename}.", suffix=".tmp", delete=False,) as temp_file:
+            temp_path = temp_file.name
+
+            json.dump(data, temp_file, indent=4)
+
+            # Flush Python's buffer and request that the OS flush the file.
+            temp_file.flush()
+            os.fsync(temp_file.fileno())
+
+        # Replace the original only after the temporary file is complete.
+        os.replace(temp_path, file_path)
+        temp_path = None
+
+    finally:
+        # Clean up an incomplete temporary file if one remains.
+        if temp_path is not None and os.path.exists(temp_path):
+            os.remove(temp_path)
+
 def save_inventory_report(report, file_path):
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(report)

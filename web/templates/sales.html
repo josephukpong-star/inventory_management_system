@@ -10,9 +10,7 @@
 </head>
 
 <body>
-
     <aside class="sidebar">
-
         <div class="sidebar-brand">
             <h2>IMS</h2>
             <p>Inventory System</p>
@@ -28,23 +26,19 @@
             <a href="/reports" class="nav-link">Reports</a>
             <a href="/financial-review" class="nav-link">Financial Review</a>
             <a href="/backups" class="nav-link">Backups</a>
-             {% if is_admin %}
-            <a href="/staff" class="nav-link">
-                Staff Management
-            </a>
+
+            {% if is_admin %}
+            <a href="/staff" class="nav-link">Staff Management</a>
             {% endif %}
         </nav>
 
         <div class="sidebar-bottom">
             <a href="/logout" class="logout-link">Logout</a>
         </div>
-
     </aside>
 
     <main class="main-content">
-
         <header class="top-header">
-
             <div>
                 <h1>Sales</h1>
                 <p>Record customer sales and update inventory</p>
@@ -54,151 +48,235 @@
                 <strong>{{ username }}</strong>
                 <span>{{ role }}</span>
             </div>
-
         </header>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="flash-message flash-{{ category }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">
+                    {{ message }}
                 </div>
+                {% endfor %}
+            </div>
             {% endif %}
         {% endwith %}
 
         <section class="welcome-section">
             <h2>Record a Sale</h2>
-
             <p>
-                Select a product, enter the quantity sold and selling price,
-                then submit the sale.
+                Add one or more products to a customer's sale.
+                Review the quantities, selling prices, and total before submitting.
             </p>
         </section>
 
         <section class="dashboard-section">
-
             <div class="section-card">
-
                 <h2>New Sale</h2>
 
                 {% if products %}
+                <form method="POST"
+                      action="{{ url_for('sales') }}"
+                      class="sale-form"
+                      id="multi_sale_form">
 
-                    <form method="POST" action="{{ url_for('sales') }}" class="sale-form">
+                    <div id="sale_items">
+                        <div class="sale-item"
+                             data-line="0"
+                             style="border: 1px solid #ddd; padding: 16px; margin-bottom: 16px; border-radius: 8px;">
 
-                        <div class="form-group">
-                            <label for="product_id">Product</label>
+                            <h3 class="sale-item-heading">Product 1</h3>
 
-                            <select id="product_id" name="product_id" required>
-                                <option value="">Select a product</option>
+                            <div class="form-group">
+                                <label for="product_id_0">Product</label>
 
-                                {% for product in products %}
+                                <select id="product_id_0"
+                                        name="product_id"
+                                        class="sale-product"
+                                        required>
+                                    <option value="">Select a product</option>
+
+                                    {% for product in products %}
                                     <option
                                         value="{{ product.product_id }}"
                                         data-stock="{{ product.quantity }}"
                                         data-cost="{{ product.price }}"
-                                        {% if product.quantity <= 0 %}disabled{% endif %}
-                                    >
+                                        {% if product.quantity <= 0 %}disabled{% endif %}>
                                         {{ product.name }} —
                                         {{ product.quantity }} units available
                                     </option>
-                                {% endfor %}
-                            </select>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="quantity_0">Quantity Sold</label>
+
+                                <input
+                                    type="number"
+                                    id="quantity_0"
+                                    name="quantity"
+                                    class="sale-quantity"
+                                    min="1"
+                                    step="1"
+                                    required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="price_0">Selling Price Per Unit (₦)</label>
+
+                                <input
+                                    type="number"
+                                    id="price_0"
+                                    name="price"
+                                    class="sale-price"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="Enter selling price"
+                                    required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="line_total_0">Line Total (₦)</label>
+
+                                <input
+                                    type="text"
+                                    id="line_total_0"
+                                    class="sale-line-total"
+                                    value="₦0.00"
+                                    readonly>
+                            </div>
+
+                            <p class="stock-message" aria-live="polite">
+                                Select a product to see available stock.
+                            </p>
+
+                            <p class="price-warning" aria-live="polite"></p>
+
+                            <p class="profit-preview" aria-live="polite">
+                                Enter a selling price and quantity to estimate profit or loss.
+                            </p>
+
+                            <button type="button"
+                                    class="remove-sale-item backup-button"
+                                    hidden>
+                                Remove Product
+                            </button>
                         </div>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="quantity">Quantity Sold</label>
+                    <button type="button"
+                            id="add_sale_item"
+                            class="backup-button">
+                        + Add Another Product
+                    </button>
 
-                            <input
-                                type="number"
-                                id="quantity"
-                                name="quantity"
-                                min="1"
-                                step="1"
-                                required
-                            >
-                        </div>
+                    <hr style="margin: 24px 0;">
 
-                        <div class="form-group">
-                            <label for="price">Selling Price Per Unit (₦)</label>
+                    <div class="form-group">
+                        <label for="sale_total">Total Sale Amount (₦)</label>
 
-                            <input
-                                type="number"
-                                id="price"
-                                name="price"
-                                min="0"
-                                step="0.01"
-                                placeholder="Enter selling price"
-                                required
-                            >
-                        </div>
+                        <input
+                            type="text"
+                            id="sale_total"
+                            value="₦0.00"
+                            readonly>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="sale_total">Estimated Sale Total (₦)</label>
+                    <div class="form-group">
+                        <label for="total_profit_preview">
+                            Estimated Gross Profit/Loss (₦)
+                        </label>
 
-                            <input
-                                type="text"
-                                id="sale_total"
-                                value="₦0.00"
-                                readonly
-                            >
-                        </div>
+                        <input
+                            type="text"
+                            id="total_profit_preview"
+                            value="₦0.00"
+                            readonly>
+                    </div>
 
-                        <p id="stock_message" aria-live="polite">
-                            Select a product to see available stock.
-                        </p>
+                    <div class="form-group">
+                        <label for="payment_method">Payment Method</label>
 
-                        <p id="price_warning" class="price-warning" aria-live="polite">
+                        <select
+                            id="payment_method"
+                            name="payment_method"
+                            required>
+                            <option value="Cash">Cash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cheque">Cheque</option>
+                        </select>
+                    </div>
 
-                        </p>
+                    <p id="sale_validation_message"
+                       aria-live="polite"></p>
 
-                        <p id="profit_preview" class="profit-preview" aria-live="polite">
-                             Enter a selling price to see the estimated gross profit or loss.
-                        </p>
-
-                        <button
-                            type="submit"
-                            class="backup-button"
-                        >
-                            Record Sale
-                        </button>
-
-                    </form>
+                    <button
+                        type="submit"
+                        id="record_sale_button"
+                        class="backup-button">
+                        Record Sale
+                    </button>
+                </form>
 
                 {% else %}
+                <p>
+                    No products are available. Add a product before recording a sale.
+                </p>
 
-                    <p>
-                        No products are available. Add a product before recording
-                        a sale.
-                    </p>
-
-                    <a href="/products" class="backup-button">
-                        View Products
-                    </a>
-
+                <a href="/products" class="backup-button">
+                    View Products
+                </a>
                 {% endif %}
-
             </div>
-
         </section>
-
     </main>
 
     <script>
-        const productSelect = document.getElementById("product_id");
-        const quantityInput = document.getElementById("quantity");
-        const priceInput = document.getElementById("price");
+        const saleItems = document.getElementById("sale_items");
+        const addSaleItemButton = document.getElementById("add_sale_item");
+        const saleForm = document.getElementById("multi_sale_form");
         const totalInput = document.getElementById("sale_total");
-        const stockMessage = document.getElementById("stock_message");
-        const priceWarning = document.getElementById("price_warning");
-        const profitPreview = document.getElementById("profit_preview");
+        const totalProfitInput = document.getElementById("total_profit_preview");
+        const validationMessage = document.getElementById("sale_validation_message");
 
-        function updateSalePreview() {
-            if (!productSelect || !quantityInput || !priceInput) {
-                return;
-            }
+        let nextLineId = 1;
+
+        function formatNaira(amount) {
+            return "₦" + amount.toLocaleString("en-NG", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function getSaleLines() {
+            return Array.from(saleItems.querySelectorAll(".sale-item"));
+        }
+
+        function updateLineHeading(line, index) {
+            const heading = line.querySelector(".sale-item-heading");
+            heading.textContent = "Product " + (index + 1);
+        }
+
+        function updateRemoveButtons() {
+            const lines = getSaleLines();
+
+            lines.forEach((line, index) => {
+                updateLineHeading(line, index);
+
+                const removeButton = line.querySelector(".remove-sale-item");
+                removeButton.hidden = lines.length === 1;
+            });
+        }
+
+        function updateSalePreview(line) {
+            const productSelect = line.querySelector(".sale-product");
+            const quantityInput = line.querySelector(".sale-quantity");
+            const priceInput = line.querySelector(".sale-price");
+            const lineTotalInput = line.querySelector(".sale-line-total");
+            const stockMessage = line.querySelector(".stock-message");
+            const priceWarning = line.querySelector(".price-warning");
+            const profitPreview = line.querySelector(".profit-preview");
 
             const selectedOption =
                 productSelect.options[productSelect.selectedIndex];
@@ -206,66 +284,260 @@
             const availableStock = selectedOption.dataset.stock;
             const quantity = Number(quantityInput.value);
             const price = Number(priceInput.value);
+            const purchaseCost = Number(selectedOption.dataset.cost);
 
-            const total = quantity * price;
-            const purchaseCost = Number(selectedOption.dataset.cost); if ( priceInput.value !== "" && Number.isFinite(price) && price >= 0 && Number.isFinite(purchaseCost) && price < purchaseCost ) { priceWarning.textContent = "Warning: The selling price is below the purchase cost. " + "This sale will result in a gross loss of ₦" + (purchaseCost - price).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " per unit."; } else { priceWarning.textContent = ""; }
-            if (quantityInput.value !== "" && priceInput.value !== "" && Number.isFinite(quantity) && quantity > 0 && Number.isFinite(price) && price >= 0 && Number.isFinite(purchaseCost)) {const estimatedProfit = (price - purchaseCost) * quantity; const formattedAmount = Math.abs(estimatedProfit).toLocaleString("en-NG",{minimumFractionDigits: 2, maximumFractionDigits: 2}); 
-if (estimatedProfit > 0) {
-    profitPreview.textContent =
-        "Estimated gross profit: ₦" + formattedAmount;
+            const validQuantity =
+                quantityInput.value !== "" &&
+                Number.isInteger(quantity) &&
+                quantity > 0;
 
-    profitPreview.className = "profit-preview profit";
+            const validPrice =
+                priceInput.value !== "" &&
+                Number.isFinite(price) &&
+                price >= 0;
 
-} else if (estimatedProfit < 0) {
-    profitPreview.textContent =
-        "Estimated gross loss: ₦" + formattedAmount;
+            const validCost =
+                selectedOption.value !== "" &&
+                Number.isFinite(purchaseCost);
 
-    profitPreview.className = "profit-preview loss";
+            let lineTotal = 0;
+            let estimatedProfit = 0;
 
-} else {
-    profitPreview.textContent =
-        "Estimated gross profit/loss: ₦0.00 (Break-even)";
+            if (validQuantity && validPrice) {
+                lineTotal = quantity * price;
+                lineTotalInput.value = formatNaira(lineTotal);
+            } else {
+                lineTotalInput.value = "₦0.00";
+            }
 
-    profitPreview.className = "profit-preview break-even";
-}
+            if (validQuantity && validPrice && validCost) {
+                estimatedProfit = (price - purchaseCost) * quantity;
 
-} else {
-    profitPreview.textContent =
-        "Enter a selling price and quantity to see the estimated gross profit or loss.";
+                if (estimatedProfit > 0) {
+                    profitPreview.textContent =
+                        "Estimated gross profit: " +
+                        formatNaira(estimatedProfit);
+                    profitPreview.className = "profit-preview profit";
+                } else if (estimatedProfit < 0) {
+                    profitPreview.textContent =
+                        "Estimated gross loss: " +
+                        formatNaira(Math.abs(estimatedProfit));
+                    profitPreview.className = "profit-preview loss";
+                } else {
+                    profitPreview.textContent =
+                        "Estimated gross profit/loss: ₦0.00 (Break-even)";
+                    profitPreview.className = "profit-preview break-even";
+                }
+            } else {
+                profitPreview.textContent =
+                    "Enter a selling price and quantity to estimate profit or loss.";
+                profitPreview.className = "profit-preview";
+            }
 
-    profitPreview.className = "profit-preview";
-}
-            totalInput.value = Number.isFinite(total)
-                ? "₦" + total.toLocaleString("en-NG", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                })
-                : "₦0.00";
+            if (validPrice && validCost && price < purchaseCost) {
+                priceWarning.textContent =
+                    "Warning: Selling below purchase cost. Estimated loss: " +
+                    formatNaira(purchaseCost - price) + " per unit.";
+            } else {
+                priceWarning.textContent = "";
+            }
 
-            if (availableStock === undefined) {
+            if (!selectedOption.value) {
                 stockMessage.textContent =
                     "Select a product to see available stock.";
-
                 quantityInput.removeAttribute("max");
+            } else {
+                quantityInput.max = availableStock;
+
+                if (Number(availableStock) <= 0) {
+                    stockMessage.textContent = "This product is out of stock.";
+                } else if (validQuantity && quantity > Number(availableStock)) {
+                    stockMessage.textContent =
+                        "Insufficient stock. Only " +
+                        availableStock + " units are available.";
+                } else {
+                    stockMessage.textContent =
+                        availableStock + " units available.";
+                }
+            }
+
+            return {
+                lineTotal,
+                estimatedProfit,
+                validQuantity,
+                validPrice,
+                validCost,
+                selectedProductId: productSelect.value,
+                availableStock: Number(availableStock)
+            };
+        }
+
+        function updateAllSalePreviews() {
+            let total = 0;
+            let totalProfit = 0;
+
+            getSaleLines().forEach(line => {
+                const result = updateSalePreview(line);
+
+                total += result.lineTotal;
+                totalProfit += result.estimatedProfit;
+            });
+
+            totalInput.value = formatNaira(total);
+            totalProfitInput.value =
+                (totalProfit < 0 ? "-" : "") +
+                formatNaira(Math.abs(totalProfit));
+
+            totalProfitInput.style.fontWeight = "bold";
+        }
+
+        function addSaleLine() {
+            const firstLine = getSaleLines()[0];
+            const newLine = firstLine.cloneNode(true);
+            const lineId = nextLineId++;
+
+            newLine.dataset.line = lineId;
+
+            const productSelect = newLine.querySelector(".sale-product");
+            productSelect.id = "product_id_" + lineId;
+            productSelect.value = "";
+
+            const quantityInput = newLine.querySelector(".sale-quantity");
+            quantityInput.id = "quantity_" + lineId;
+            quantityInput.value = "";
+            quantityInput.removeAttribute("max");
+
+            const priceInput = newLine.querySelector(".sale-price");
+            priceInput.id = "price_" + lineId;
+            priceInput.value = "";
+
+            const lineTotalInput = newLine.querySelector(".sale-line-total");
+            lineTotalInput.id = "line_total_" + lineId;
+            lineTotalInput.value = "₦0.00";
+
+            newLine.querySelector(".stock-message").textContent =
+                "Select a product to see available stock.";
+
+            newLine.querySelector(".price-warning").textContent = "";
+
+            const profitPreview = newLine.querySelector(".profit-preview");
+            profitPreview.textContent =
+                "Enter a selling price and quantity to estimate profit or loss.";
+            profitPreview.className = "profit-preview";
+
+            saleItems.appendChild(newLine);
+
+            updateRemoveButtons();
+            updateAllSalePreviews();
+
+            productSelect.focus();
+        }
+
+        addSaleItemButton.addEventListener("click", addSaleLine);
+
+        saleItems.addEventListener("click", event => {
+            const removeButton = event.target.closest(".remove-sale-item");
+
+            if (!removeButton) {
                 return;
             }
 
-            quantityInput.max = availableStock;
+            const line = removeButton.closest(".sale-item");
 
-            if (Number(availableStock) <= 0) {
-                stockMessage.textContent = "This product is out of stock.";
-            } else if (quantity > Number(availableStock)) {
-                stockMessage.textContent =
-                    "Insufficient stock. Only " +
-                    availableStock + " units are available.";
-            } else {
-                stockMessage.textContent =
-                    availableStock + " units available.";
+            if (getSaleLines().length > 1) {
+                line.remove();
+                updateRemoveButtons();
+                updateAllSalePreviews();
             }
-        }
+        });
 
-        if (productSelect) {productSelect.addEventListener("change", updateSalePreview); quantityInput.addEventListener("input", updateSalePreview); priceInput.addEventListener("input", updateSalePreview);}
+        saleItems.addEventListener("input", event => {
+            if (
+                event.target.matches(".sale-quantity") ||
+                event.target.matches(".sale-price")
+            ) {
+                updateAllSalePreviews();
+            }
+        });
+
+        saleItems.addEventListener("change", event => {
+            if (event.target.matches(".sale-product")) {
+                updateAllSalePreviews();
+            }
+        });
+
+        saleForm.addEventListener("submit", event => {
+            const lines = getSaleLines();
+            const selectedProducts = new Set();
+            const errors = [];
+
+            lines.forEach((line, index) => {
+                const result = updateSalePreview(line);
+                const productSelect = line.querySelector(".sale-product");
+                const quantityInput = line.querySelector(".sale-quantity");
+                const priceInput = line.querySelector(".sale-price");
+                const lineNumber = index + 1;
+
+                if (!result.selectedProductId) {
+                    errors.push("Select a product for line " + lineNumber + ".");
+                } else if (selectedProducts.has(result.selectedProductId)) {
+                    errors.push(
+                        "Product selections must be unique. " +
+                        "Line " + lineNumber + " duplicates another product. " +
+                        "Combine the quantities on one line."
+                    );
+                } else {
+                    selectedProducts.add(result.selectedProductId);
+                }
+
+                if (
+                    !result.validQuantity ||
+                    result.validQuantity === false
+                ) {
+                    errors.push(
+                        "Enter a whole quantity greater than zero on line " +
+                        lineNumber + "."
+                    );
+                }
+
+                if (!result.validPrice) {
+                    errors.push(
+                        "Enter a valid selling price on line " + lineNumber + "."
+                    );
+                }
+
+                if (
+                    result.selectedProductId &&
+                    result.validQuantity &&
+                    result.availableStock < Number(quantityInput.value)
+                ) {
+                    errors.push(
+                        "Insufficient stock for line " + lineNumber + "."
+                    );
+                }
+
+                if (
+                    productSelect.value &&
+                    !Number.isFinite(Number(priceInput.value))
+                ) {
+                    errors.push(
+                        "Check the selling price on line " + lineNumber + "."
+                    );
+                }
+            });
+
+            if (errors.length > 0) {
+                event.preventDefault();
+                validationMessage.textContent = errors.join(" ");
+                validationMessage.style.color = "red";
+                return;
+            }
+
+            validationMessage.textContent = "";
+        });
+
+        updateRemoveButtons();
+        updateAllSalePreviews();
     </script>
-
 </body>
 </html>

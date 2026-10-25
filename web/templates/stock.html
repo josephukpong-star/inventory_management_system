@@ -81,6 +81,107 @@
 
         </section>
 
+        <!-- Stock Overview Summary Cards -->
+
+        <section class="dashboard-section stock-overview-cards">
+
+        <div class="dashboard-card">
+            <h3>Total Products</h3>
+            <p class="dashboard-card-value">{{ products|length }}</p>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Total Stock Quantity</h3>
+            <p class="dashboard-card-value">
+                {{ products|sum(attribute='quantity') }}
+            </p>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Low-Stock Products</h3>
+            <p class="dashboard-card-value">
+                {{ alerts|selectattr('status', 'equalto', 'LOW STOCK')|list|length }}
+            </p>
+        </div>
+
+        <div class="dashboard-card">
+            <h3>Out-of-Stock Products</h3>
+            <p class="dashboard-card-value">
+                {{ alerts|selectattr('status', 'equalto', 'OUT OF STOCK')|list|length }}
+            </p>
+        </div>
+
+        </section>
+
+        <!-- Stock Alerts -->
+
+        <section class="dashboard-section">
+
+        <div class="section-card">
+
+            <h2>Stock Alerts</h2>
+
+            <p>
+                Review products that need replenishment or have run out of stock.
+            </p>
+
+            {% if alerts %}
+
+                <div class="table-responsive">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Product ID</th>
+                                <th>Product Name</th>
+                                <th>Current Quantity</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for alert in alerts %}
+
+                                <tr>
+                                    <td>{{ alert.product_id }}</td>
+                                    <td>{{ alert.product_name }}</td>
+                                    <td>{{ alert.quantity }}</td>
+
+                                    <td>
+                                        {% if alert.status == 'OUT OF STOCK' %}
+                                            <span class="status-danger">
+                                                OUT OF STOCK
+                                            </span>
+                                        {% else %}
+                                            <span class="status-warning">
+                                                LOW STOCK
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <p class="success-message">
+                    All products have sufficient stock.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+        </section>
+
 
         <section class="dashboard-section">
 
@@ -118,6 +219,26 @@
 
                     </div>
 
+                    <div class="form-group">
+                        <label for="stock_in_unit">Purchase Unit</label>
+                        <select id="stock_in_unit" name="unit">
+                            <option value="">Use base unit</option>
+
+                            {% for product in products %}
+                                {% for unit in product.purchase_units %}
+                                    <option
+                                        value="{{ unit.name }}"
+                                        data-product-id="{{ product.product_id }}"
+                                        data-unit-type="purchase"
+                                        hidden
+                                    >
+                                        {{ product.name }} — {{ unit.name }}
+                                    </option>
+                                {% endfor %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
 
                     <div class="form-group">
 
@@ -129,7 +250,8 @@
                             type="number"
                             id="quantity"
                             name="quantity"
-                            min="1"
+                            min="0.01"
+                            step="any"
                             required
                         >
 
@@ -204,6 +326,26 @@
 
         </div>
 
+        <div class="form-group">
+            <label for="stock_out_unit">Selling Unit</label>
+            <select id="stock_out_unit" name="unit">
+                <option value="">Use base unit</option>
+
+                {% for product in products %}
+                    {% for unit in product.selling_units %}
+                        <option
+                            value="{{ unit.name }}"
+                            data-product-id="{{ product.product_id }}"
+                            data-unit-type="selling"
+                            hidden
+                        >
+                            {{ product.name }} — {{ unit.name }}
+                        </option>
+                    {% endfor %}
+                {% endfor %}
+            </select>
+        </div>
+
 
         <div class="form-group">
 
@@ -215,7 +357,8 @@
                 type="number"
                 id="stock_out_quantity"
                 name="quantity"
-                min="1"
+                min="0.01"
+                step="any"
                 required
             >
 
@@ -240,14 +383,30 @@
 </div>
 
 
+        <div class="form-group">
+        <label for="stock_out_reason">Reason for Stock Out</label>
+        <select id="stock_out_reason" name="reason" required>
+            <option value="Sale">Sale</option>
+            <option value="Damaged Goods">Damaged Goods</option>
+            <option value="Internal Use">Internal Use</option>
+            <option value="Gift/Free Issue">Gift/Free Issue</option>
+            <option value="Other">Other</option>
+        </select>
+
+        </div>
+
         <button
-            type="submit"
-            name="action"
-            value="stock_out"
-            class="backup-button"
+        type="submit"
+        name="action"
+        value="stock_out"
+        class="backup-button"
+
         >
-            Stock Out
+
+        Stock Out
+
         </button>
+
 
     </form>
 
@@ -320,6 +479,48 @@
         </section>
 
     </main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    function connectProductUnits(productSelectId, unitSelectId) {
+        const productSelect = document.getElementById(productSelectId);
+        const unitSelect = document.getElementById(unitSelectId);
+
+        if (!productSelect || !unitSelect) {
+            return;
+        }
+
+        const unitOptions = Array.from(unitSelect.options).slice(1);
+
+        function updateUnits() {
+            const selectedProductId = productSelect.value;
+
+            unitSelect.value = "";
+
+            unitOptions.forEach(function (option) {
+                const matchesProduct =
+                    selectedProductId !== "" &&
+                    option.dataset.productId === selectedProductId;
+
+                option.disabled = !matchesProduct;
+                option.hidden = !matchesProduct;
+            });
+
+            unitSelect.disabled = selectedProductId === "";
+        }
+
+        productSelect.addEventListener("change", updateUnits);
+        updateUnits();
+    }
+
+    connectProductUnits("product_id", "stock_in_unit");
+
+    connectProductUnits(
+        "stock_out_product_id",
+        "stock_out_unit"
+    );
+});
+</script>
 
 </body>
 </html>

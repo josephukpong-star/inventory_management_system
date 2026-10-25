@@ -4,6 +4,8 @@ from collections import defaultdict
 from functools import wraps
 from dotenv import load_dotenv
 import os
+import math
+import copy
 from web.auth import authenticate_user, create_staff_user, load_users
 from app.inventory_service import InventoryService
 from app.models import Product
@@ -237,26 +239,63 @@ def add_product():
     inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
 
     if request.method == "POST":
-        product_id = int(request.form.get("product_id"))
-        name = request.form.get("name")
-        price = float(request.form.get("price"))
-        quantity = int(request.form.get("quantity"))
-        category = request.form.get("category")
+        try:
+            product_id = int(request.form.get("product_id", ""))
+            name = request.form.get("name", "").strip()
+            price = float(request.form.get("price", ""))
+            selling_price = float(request.form.get("selling_price", ""))
+            quantity = int(request.form.get("quantity", ""))
+            category = request.form.get("category", "").strip() or "Uncategorized"
 
-        product = Product(product_id, name, price, quantity, category,)
+            # Preserve compatibility with older product submissions.
+            base_unit = request.form.get("base_unit", "unit").strip() or "unit"
 
-        inventory_service.add_product(product)
-        inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+            def read_units(name_field, factor_field):
+                unit_names = request.form.getlist(name_field)
+                unit_factors = request.form.getlist(factor_field)
 
-        return redirect(url_for("products"))
+                if len(unit_names) != len(unit_factors):
+                    raise ValueError("Each packaging unit must have a matching conversion factor.")
+                units = []
 
+                for unit_name, factor_text in zip(unit_names, unit_factors):
+                    unit_name = unit_name.strip()
+                    factor_text = factor_text.strip()
+
+                    # Ignore an optional row only when both fields are empty.
+                    if not unit_name and not factor_text:
+                        continue
+
+                    if not unit_name or not factor_text:
+                        raise ValueError("Enter both the unit name and conversion factor.")
+
+                    try:
+                        factor = float(factor_text)
+                    except ValueError:
+                        raise ValueError("Conversion factors must be valid numbers.") from None
+
+                    if not math.isfinite(factor) or factor <= 0:
+                        raise ValueError("Conversion factors must be positive, finite numbers.")
+
+                    units.append({"name": unit_name, "base_quantity": (int(factor) if factor.is_integer() else factor),})
+                return units
+
+            purchase_units = read_units("purchase_unit_name", "purchase_unit_factor",)
+            selling_units = read_units("selling_unit_name", "selling_unit_factor",)
+
+            product = Product(product_id, name, price, quantity, category, base_unit=base_unit, purchase_units=purchase_units, selling_units=selling_units, selling_price=selling_price,)
+            inventory_service.add_product(product)
+            inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+            flash("Product added successfully!", "success")
+            return redirect(url_for("products"))
+
+        except (ValueError, TypeError, OverflowError) as exc:
+            return render_template("add_product.html", username=session["username"], role=session["role"], error=str(exc),)
     return render_template("add_product.html", username=session["username"], role=session["role"],)
 
 @app.route("/products/remove", methods=["POST"])
+@admin_required
 def remove_product():
-    if "username" not in session:
-        return "Please log in first."
-
     inventory_service = InventoryService()
     inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
 
@@ -280,10 +319,8 @@ def deleted_history():
     return render_template("deleted_history.html", username=session["username"], role=session["role"], deleted_products=deleted_products,)
 
 @app.route("/products/restore", methods=["POST"])
+@admin_required
 def restore_product():
-    if "username" not in session:
-        return "Please log in first."
-
     inventory_service = InventoryService()
     inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
 
@@ -295,10 +332,8 @@ def restore_product():
     return redirect(url_for("products"))
 
 @app.route("/products/delete-permanently", methods=["POST"])
+@admin_required
 def permanently_delete_product():
-    if "username" not in session:
-        return "Please log in first."
-
     inventory_service = InventoryService()
     inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
 
@@ -373,49 +408,130 @@ def stock():
 
         try:
             product_id = int(request.form.get("product_id", ""))
-            quantity = int(request.form.get("quantity", ""))
+            quantity = float(request.form.get("quantity", ""))
+            unit = request.form.get("unit", "").strip() or None
+
+            # Convert whole-number quantities back to integers.
+            if quantity.is_integer():
+                quantity = int(quantity)
+            price = float(request.form.get("price", ""))
 
             if action == "stock_in":
-                price = float(request.form.get("price", ""))
-                inventory_service.stock_in(product_id, quantity, price=price)
+                inventory_service.stock_in(product_id, quantity, price=price, unit=unit,)
                 success_message = "Stock In completed successfully."
 
             elif action == "stock_out":
-                price = float(request.form.get("price", ""))
-                inventory_service.stock_out(product_id, quantity, price=price)
+                reason = request.form.get("reason", "Other").strip()
+
+                inventory_service.stock_out(product_id, quantity, price=price, reason=reason, unit=unit,)
+
                 success_message = "Stock Out completed successfully."
 
             else:
                 raise ValueError("Please select a valid stock action.")
-
             inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
             flash(success_message, "success")
 
-        except (ValueError, TypeError) as error:
+        except (ValueError, TypeError, OverflowError) as error:
             flash(str(error), "error")
-
         return redirect(url_for("stock"))
-
     products = inventory_service.products
-    return render_template(
-"stock.html", username=session["username"], role=session["role"], products=products,)
+    alerts = inventory_service.get_inventory_alerts()
+    return render_template("stock.html", username=session["username"], role=session["role"], products=products, alerts=alerts,)
 
 @app.route("/sales", methods=["GET", "POST"])
 def sales():
     if "username" not in session:
         return "Please log in first."
+
     inventory_service = InventoryService()
     inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+
     if request.method == "POST":
         try:
-            product_id = int(request.form.get("product_id", ""))
-            quantity = int(request.form.get("quantity", ""))
-            price = float(request.form.get("price", ""))
-            inventory_service.stock_out(product_id, quantity, price=price, reason="Sale",)
-            inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
-            flash("Sale recorded successfully.", "success")
+            # Read all product lines submitted by the form.
+            product_ids = request.form.getlist("product_id")
+            quantities = request.form.getlist("quantity")
+            prices = request.form.getlist("price")
+
+            payment_method = request.form.get("payment_method", "").strip()
+
+            valid_payment_methods = {"Cash", "Bank Transfer", "Cheque",}
+
+            if payment_method not in valid_payment_methods:
+                raise ValueError("Please select a valid payment method.")
+
+            # Require at least one complete product line.
+            if not product_ids:
+                raise ValueError("Please add at least one product to the sale.")
+
+            if not (len(product_ids) == len(quantities) == len(prices)):
+                raise ValueError("The sale contains incomplete product lines. " "Please review the form and try again.")
+
+            # Validate every line before changing inventory.
+            validated_lines = []
+            seen_product_ids = set()
+
+            for raw_product_id, raw_quantity, raw_price in zip(product_ids, quantities, prices):
+                try:
+                    product_id = int(raw_product_id)
+                    quantity = int(raw_quantity)
+                    price = float(raw_price)
+                except (ValueError, TypeError):
+                    raise ValueError("Each product line must have a valid " "product, whole-number quantity, " "and selling price.")
+
+                if quantity <= 0:
+                    raise ValueError("Sale quantities must be greater than zero.")
+
+                if not math.isfinite(price) or price < 0:
+                    raise ValueError("Selling prices must be valid, " "non-negative numbers.")
+
+                if product_id in seen_product_ids:
+                    raise ValueError("Each product can appear only once per sale. " "Please combine duplicate product lines.")
+
+                seen_product_ids.add(product_id)
+
+                product = inventory_service.get_product(product_id)
+
+                if quantity > product.quantity:
+                    raise ValueError(f"Insufficient stock for {product.name}. " f"Available: {product.quantity}; " f"requested: {quantity}.")
+
+                validated_lines.append({"product_id": product_id, "quantity": quantity, "price": price,})
+
+            # Preserve the in-memory state before making changes.
+            original_quantities = {product.product_id: product.quantity for product in inventory_service.products}
+            original_transactions = copy.deepcopy(inventory_service.transactions)
+
+            # Create one reference shared by every line in this sale.
+            sale_reference = (f"SALE-{datetime.now().strftime('%Y%m%d%H%M%S%f')}")
+
+            try:
+                for line in validated_lines:
+                    inventory_service.stock_out(line["product_id"], line["quantity"], price=line["price"], reason="Sale",)
+
+                    transaction = inventory_service.transactions[-1]
+                    transaction["payment_method"] = payment_method
+                    transaction["sale_reference"] = sale_reference
+
+                # Persist only after all lines have been processed.
+                inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+
+            except Exception:
+                # Restore in-memory stock and transaction history.
+                for product in inventory_service.products:
+                    if product.product_id in original_quantities:
+                        product.quantity = original_quantities[product.product_id]
+                inventory_service.transactions = original_transactions
+                raise
+
+            flash(f"Sale recorded successfully. " f"Sale reference: {sale_reference}", "success",)
         except (ValueError, TypeError) as error:
             flash(str(error), "error")
+
+        except OSError:
+            app.logger.exception("Failed to save the sale.")
+            flash("The sale could not be saved because of a storage error. " "Please check the inventory before trying again.", "error",)
+
         return redirect(url_for("sales"))
     products = inventory_service.products
     return render_template("sales.html", username=session["username"], role=session["role"], products=products,)
@@ -573,11 +689,19 @@ def financial_review():
 
     filtered_transactions = filter_transactions_by_period(transactions, period, specific_date=request.args.get("date"), start_date=request.args.get("start_date"), end_date=request.args.get("end_date"),)
 
-    sales = [item for item in filtered_transactions if item.get("type") == "STOCK-OUT" and item.get("reason") == "Sale"]
+    sales = [item for item in filtered_transactions if item.get("type") == "STOCK-OUT" and item.get("reason") == "Sale" and not item.get("cancelled", False)]
 
     stock_in_transactions = [item for item in filtered_transactions if item.get("type") == "STOCK-IN"]
 
     revenue = sum(item.get("sales_value", 0) or 0 for item in sales)
+
+    cash_received = sum(item.get("sales_value", 0) or 0 for item in sales if item.get("payment_method") == "Cash")
+
+    bank_transfer_received = sum(item.get("sales_value", 0) or 0 for item in sales if item.get("payment_method") == "Bank Transfer")
+
+    cheque_received = sum(item.get("sales_value", 0) or 0 for item in sales if item.get("payment_method") == "Cheque")
+
+    unspecified_payment_total = sum(item.get("sales_value", 0) or 0 for item in sales if item.get("payment_method") not in {"Cash", "Bank Transfer", "Cheque"})
 
     cost_of_goods_sold = sum(item.get("inventory_cost", 0) or 0 for item in sales)
 
@@ -603,7 +727,7 @@ def financial_review():
 
     profitability_rows.sort(key=lambda item: item["gross_profit"], reverse=True,)
 
-    return render_template("financial_review.html", username=session["username"], role=session["role"], period=period, revenue=revenue, cost_of_goods_sold=cost_of_goods_sold, gross_profit=gross_profit, stock_in_value=stock_in_value, sales_count=len(sales), profitability_rows=profitability_rows,)
+    return render_template( "financial_review.html", username=session["username"], role=session["role"], period=period, revenue=revenue, cost_of_goods_sold=cost_of_goods_sold, gross_profit=gross_profit, stock_in_value=stock_in_value, sales_count=len(sales), profitability_rows=profitability_rows, cash_received=cash_received, bank_transfer_received=bank_transfer_received, cheque_received=cheque_received, unspecified_payment_total=unspecified_payment_total, )
 
 if __name__ == "__main__":
     app.run(debug=True)

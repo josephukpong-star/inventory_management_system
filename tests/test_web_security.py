@@ -57,10 +57,62 @@ def test_staff_can_access_transactions_page(client):
     response = client.get("/transactions")
     assert response.status_code == 200
 
+def test_staff_transactions_hide_inventory_costs(client, monkeypatch):
+    import web.app as web_app
+
+    class FakeInventoryService:
+        def load_inventory(self, filename):
+            pass
+
+        def get_transactions(self):
+            return [{"product_id": 1, "product_name": "Security Test Product", "type": "STOCK-OUT", "quantity": 2, "reason": "Sale", "price": 1500, "total_value": 3000, "sales_value": 3000, "inventory_cost": 2200, "timestamp": "2026-10-25 12:00:00",}]
+
+    monkeypatch.setattr(web_app, "InventoryService", FakeInventoryService,)
+
+    login_as(client, "test_staff", "Staff")
+
+    response = client.get("/transactions")
+
+    assert response.status_code == 200
+
+    page = response.get_data(as_text=True)
+
+    # Staff may see the selling price and actual sales amount.
+    assert "₦1,500.00" in page
+    assert "₦3,000.00" in page
+
+    # Staff must not see the inventory cost.
+    assert "₦2,200.00" not in page
+
+    # Operational transaction details remain visible.
+    assert "Security Test Product" in page
+    assert "STOCK-OUT" in page
+
+
 def test_staff_can_access_reports_page(client):
     login_as(client, "test_staff", "Staff")
     response = client.get("/reports")
     assert response.status_code == 200
+
+def test_staff_cannot_see_financial_values_in_reports(client):
+    login_as(client, "test_staff", "Staff")
+
+    response = client.get("/reports")
+
+    assert response.status_code == 200
+
+    page = response.get_data(as_text=True)
+
+    # Financial headings must not appear for staff.
+    assert "Stock-In Value" not in page
+    assert "Sales Revenue" not in page
+    assert "Cost of Goods Sold" not in page
+    assert "Gross Profit" not in page
+
+    # Sensitive financial fields must not be rendered with real amounts.
+    assert "₦500,000.00" not in page
+    assert "₦1,000,000.00" not in page
+    assert "₦400,000.00" not in page
 
 def test_staff_can_access_sales_page(client):
     login_as(client, "test_staff", "Staff")

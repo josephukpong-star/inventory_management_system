@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,198 +7,433 @@
     <title>Inventory Management System - Add Product</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .product-form-container {
+            display: block;
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 20px 30px;
+            box-sizing: border-box;
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .product-form-card {
+            display: block;
+            width: 100%;
+            max-width: none;
+            padding: 32px;
+            box-sizing: border-box;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 3px 14px rgba(0, 0, 0, 0.06);
+        }
+
+        .product-form-card > h2 {
+            margin: 0 0 10px;
+        }
+
+        .form-description {
+            margin: 0 0 28px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h2 {
+            margin: 0 0 10px;
+            font-size: 19px;
+        }
+
+        .form-section-description {
+            margin: 0 0 22px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 24px 20px;
+            align-items: start;
+        }
+
+        .product-form-card .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            margin: 0;
+            min-width: 0;
+        }
+
+        .product-form-card label {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .product-form-card input,
+        .product-form-card select {
+            width: 100%;
+            min-width: 0;
+            min-height: 46px;
+            padding: 11px 12px;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 14px;
+            background: #fff;
+        }
+
+        .product-form-card input:focus,
+        .product-form-card select:focus {
+            outline: 2px solid #93c5fd;
+            border-color: #2563eb;
+        }
+
+        .product-form-card small {
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .unit-row {
+            padding: 20px 0;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .unit-row:first-of-type {
+            border-top: none;
+        }
+
+        .unit-row h3 {
+            margin: 0 0 16px;
+            font-size: 15px;
+        }
+
+        .form-error {
+            margin-bottom: 24px;
+            padding: 14px 16px;
+            border-radius: 7px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            line-height: 1.5;
+        }
+
+        .form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .form-actions button,
+        .form-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 12px 26px;
+            border-radius: 7px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .save-product-button {
+            border: none;
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .save-product-button:hover {
+            background: #1d4ed8;
+        }
+
+        .cancel-product-button {
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #334155;
+        }
+
+        .cancel-product-button:hover {
+            background: #f8fafc;
+        }
+
+        @media (max-width: 1400px) {
+            .form-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 800px) {
+            .product-form-card {
+                padding: 22px;
+            }
+
+            .form-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 20px 16px;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .product-form-card {
+                padding: 16px;
+            }
+
+            .form-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .form-actions button,
+            .form-actions a {
+                width: 100%;
+            }
+        }
+
+        /* Selling Units layout */
+        .selling-units-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 28px;
+            align-items: start;
+        }
+
+        .selling-units-grid .unit-row {
+            min-width: 0;
+            padding: 22px;
+            margin: 0;
+            border: 1px solid #dbe3ed;
+            border-radius: 10px;
+            background: #f8fafc;
+            box-sizing: border-box;
+        }
+
+        .selling-units-grid .unit-row h3 {
+            margin: 0 0 20px;
+            font-size: 16px;
+        }
+
+        .selling-units-grid .form-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 20px;
+        }
+
+        .selling-units-grid .form-group {
+            min-width: 0;
+        }
+
+        .selling-units-grid input {
+            min-height: 48px;
+        }
+
+        @media (max-width: 1200px) {
+            .selling-units-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 700px) {
+            .selling-units-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+    </style>
 </head>
 
 <body>
-
     <aside class="sidebar">
-
         <div class="sidebar-brand">
             <h2>IMS</h2>
             <p>Inventory System</p>
         </div>
 
         <nav class="sidebar-nav">
-
-            <a href="/dashboard" class="nav-link">
-                Dashboard
-            </a>
-
-            <a href="/products" class="nav-link active">
-                Products
-            </a>
-
-            <a href="/stock" class="nav-link">
-                Stock
-            </a>
-
-            <a href="/transactions" class="nav-link">
-                Transactions
-            </a>
-
-            <a href="/reports" class="nav-link">
-                Reports
-            </a>
-
-            <a href="/backups" class="nav-link">
-                Backups
-            </a>
-
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/products" class="nav-link active">Products</a>
+            <a href="/stock" class="nav-link">Stock</a>
+            <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/reports" class="nav-link">Reports</a>
+            <a href="/backups" class="nav-link">Backups</a>
         </nav>
 
         <div class="sidebar-bottom">
-            <a href="/logout" class="logout-link">
-                Logout
-            </a>
+            <a href="/logout" class="logout-link">Logout</a>
         </div>
-
     </aside>
 
-
     <main class="main-content">
-
         <header class="top-header">
-
             <div>
                 <h1>Add Product</h1>
-                <p>Add a new product to your inventory.</p>
+                <p>Add a new product and manage its stock and pricing.</p>
             </div>
 
             <div class="user-info">
                 <strong>{{ username }}</strong>
                 <span>{{ role }}</span>
             </div>
-
         </header>
 
-
         <section class="welcome-section">
-
             <h2>New Product</h2>
-
-            <p>
-                Enter the product details below.
-            </p>
-
+            <p>Enter the product details, pricing, and opening stock below.</p>
         </section>
 
-
-        <section class="dashboard-section">
-
-            <div class="section-card">
-
+        <section class="dashboard-section product-form-container">
+            <div class="product-form-card">
                 <h2>Product Information</h2>
+                <p class="form-description">
+                    Enter the product identity, prices, and opening stock.
+                </p>
 
-                <form method="POST" action="/products/add">
+                {% if error %}
+                    <div class="form-error" role="alert">
+                        <strong>Unable to save product:</strong> {{ error }}
+                    </div>
+                {% endif %}
 
-                    <div class="form-group">
+                <form method="POST" action="{{ url_for('add_product') }}">
 
-                        <label for="product_id">
-                            Product ID
-                        </label>
+                    <div class="form-section">
+                        <h2>Basic Details</h2>
 
-                        <input
-                            type="number"
-                            id="product_id"
-                            name="product_id"
-                            min="1"
-                            required
-                    >
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="product_id">Product ID</label>
+                                <input type="number" id="product_id" name="product_id"
+                                       min="1" step="1" required>
+                            </div>
 
-                </div>
+                            <div class="form-group">
+                                <label for="name">Product Name</label>
+                                <input type="text" id="name" name="name"
+                                       placeholder="e.g. Eggs" required>
+                            </div>
 
-                    <div class="form-group">
+                            <div class="form-group">
+                                <label for="category">Category</label>
+                                <input type="text" id="category" name="category"
+                                       placeholder="e.g. Food, Electronics">
+                            </div>
 
-                        <label for="name">
-                            Product Name
-                        </label>
+                            <div class="form-group">
+                                <label for="base_unit">Base Unit</label>
+                                <input type="text" id="base_unit" name="base_unit"
+                                       placeholder="e.g. piece" required>
+                                <small>The smallest unit used to track stock.</small>
+                            </div>
 
-                        <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            required
-                        >
+                            <div class="form-group">
+                                <label for="price">Cost Price per Base Unit (₦)</label>
+                                <input type="number" id="price" name="price"
+                                       min="0" step="0.01" placeholder="e.g. 100" required>
+                                <small>Used to calculate inventory cost.</small>
+                            </div>
 
+                            <div class="form-group">
+                                <label for="selling_price">Selling Price per Base Unit (₦)</label>
+                                <input type="number" id="selling_price" name="selling_price"
+                                       min="0" step="0.01" placeholder="e.g. 150" required>
+                                <small>The price charged for one base unit.</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="quantity">Opening Quantity (Base Units)</label>
+                                <input type="number" id="quantity" name="quantity"
+                                       min="0" step="1" placeholder="e.g. 0" required>
+                                <small>Enter the opening stock in base units.</small>
+                            </div>
+                        </div>
                     </div>
 
+                    <div class="form-section">
+    <h2>Purchase Unit</h2>
+    <p class="form-section-description">
+        Configure the package used when receiving stock from suppliers.
+        For example, one crate containing 30 pieces has a conversion factor of 30.
+    </p>
 
-                    <div class="form-group">
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="purchase_unit_name">Purchase Unit Name</label>
+            <input
+                type="text"
+                id="purchase_unit_name"
+                name="purchase_unit_name"
+                placeholder="e.g. crate"
+            >
+        </div>
 
-                        <label for="category">
-                            Category
-                        </label>
+        <div class="form-group">
+            <label for="purchase_unit_factor">Purchase Conversion Factor</label>
+            <input
+                type="number"
+                id="purchase_unit_factor"
+                name="purchase_unit_factor"
+                min="0.000001"
+                step="any"
+                placeholder="e.g. 30"
+            >
+            <small>Base units contained in one purchase package.</small>
+        </div>
+    </div>
+</div>
 
-                        <input
-                            type="text"
-                            id="category"
-                            name="category"
-                            placeholder="e.g. Electronics"
-                        >
+<div class="form-section">
+    <h2>Selling Unit</h2>
+    <p class="form-section-description">
+        Configure one unit customers can purchase, such as a half-crate or pack.
+    </p>
 
-                    </div>
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="selling_unit_name">Selling Unit Name</label>
+            <input
+                type="text"
+                id="selling_unit_name"
+                name="selling_unit_name"
+                placeholder="e.g. half-crate"
+            >
+        </div>
 
+        <div class="form-group">
+            <label for="selling_unit_factor">Selling Unit Conversion Factor</label>
+            <input
+                type="number"
+                id="selling_unit_factor"
+                name="selling_unit_factor"
+                min="0.000001"
+                step="any"
+                placeholder="e.g. 15"
+            >
+            <small>Base units contained in one selling unit.</small>
+        </div>
+    </div>
+</div>
 
-                    <div class="form-group">
-
-                        <label for="price">
-                            Price
-                        </label>
-
-                        <input
-                            type="number"
-                            id="price"
-                            name="price"
-                            min="0"
-                            step="0.01"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="quantity">
-                            Quantity
-                        </label>
-
-                        <input
-                            type="number"
-                            id="quantity"
-                            name="quantity"
-                            min="0"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div class="form-actions">
-
-                        <button
-                            type="submit"
-                            class="btn-primary"
-                        >
-                            Add Product
+                                        <div class="form-actions">
+                        <button type="submit" class="save-product-button">
+                            Save Product
                         </button>
 
-                        <a
-                            href="/products"
-                            class="btn-secondary"
-                        >
+                        <a href="{{ url_for('products') }}" class="cancel-product-button">
                             Cancel
                         </a>
-
                     </div>
-
                 </form>
-
             </div>
-
         </section>
-
     </main>
-
 </body>
 </html>

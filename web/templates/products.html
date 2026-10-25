@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -69,6 +69,15 @@
 
         </section>
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
         <section class="dashboard-section">
 
@@ -131,7 +140,7 @@
                                         <td>{{ product.category }}</td>
 
                                         <td>
-                                            ₦{{ "{:,.2f}".format(product.price) }}
+                                            â‚¦{{ "{:,.2f}".format(product.price) }}
                                         </td>
 
                                         <td>{{ product.quantity }}</td>
@@ -149,15 +158,16 @@
                                                 <span class="product-status status-health">
                                                     IN STOCK
                                                 </span>
-                                            {% endif %} 
+                                            {% endif %}
                                         </td>
 
-                                        
+
                                         <td>
                                             <a href="/products/update?product_id={{ product.product_id }}" class="btn-secondary">
                                                 Update
                                             </a>
 
+                                            {% if is_admin %}
                                             <form action="/products/remove" method="POST" style="display:inline;"
                                                     onsubmit="return confirm('Are you sure you want to remove this product?');">
                                                 <input type="hidden" name="product_id" value="{{ product.product_id }}">
@@ -165,8 +175,10 @@
                                                     Remove
                                                 </button>
                                             </form>
+                                            {% endif %}
+
                                         </td>
-                                    </tr>   
+                                    </tr>
 
 
                                 {% endfor %}

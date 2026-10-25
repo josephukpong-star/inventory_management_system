@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 import json
 from app.models import Product
 from app.inventory_service import InventoryService
@@ -1070,7 +1070,7 @@ def test_stock_in_changes_out_of_stock_to_in_stock():
     inventory.add_product(product)
     assert inventory.get_product_stock_status(1) == "OUT OF STOCK"
     inventory.stock_in(1, 10)
-    assert inventory.get_product_stock_status(1) == "IN STOCK"    
+    assert inventory.get_product_stock_status(1) == "IN STOCK"
 def test_low_stock_products_update_after_stock_change():
     inventory = InventoryService()
     product = Product(1, "Laptop", 3, 3, "Electronics")
@@ -1280,7 +1280,7 @@ def test_generate_inventory_report_contains_summary():
     assert "INVENTORY REPORT" in report
     assert "Total Products: 1" in report
     assert "Total Quantity: 5" in report
-    assert "Total Inventory Value: ₦4,250,000.00" in report
+    assert "Total Inventory Value: â‚¦4,250,000.00" in report
 def test_generate_inventory_report_contains_stock_status():
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 850000, 3, "Electronics"))
@@ -1297,7 +1297,7 @@ def test_generate_inventory_report_contains_category_summary():
     assert "Electronics" in report
     assert "Products: 1" in report
     assert "Quantity: 5" in report
-    assert "Value: ₦4,250,000.00" in report
+    assert "Value: â‚¦4,250,000.00" in report
     assert "Accessories" in report
 def test_generate_inventory_report_empty_inventory():
     inventory = InventoryService()
@@ -1305,7 +1305,7 @@ def test_generate_inventory_report_empty_inventory():
     assert "INVENTORY REPORT" in report
     assert "Total Products: 0" in report
     assert "Total Quantity: 0" in report
-    assert "Total Inventory Value: ₦0.00" in report
+    assert "Total Inventory Value: â‚¦0.00" in report
     assert "Low Stock: 0" in report
     assert "Out of Stock: 0" in report
     assert "Categories:" in report
@@ -1317,7 +1317,7 @@ def test_generate_inventory_report_aggregates_category_data():
     assert "Electronics" in report
     assert "Products: 2" in report
     assert "Quantity: 8" in report
-    assert "Value: ₦5,000,000.00" in report
+    assert "Value: â‚¦5,000,000.00" in report
 def test_stock_in_rejects_boolean_product_id():
     inventory = InventoryService()
     with pytest.raises(ValueError, match="Product ID must be an integer"):
@@ -1754,10 +1754,10 @@ def test_get_transaction_value_summary_multiple_products():
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 100000, 10))
     inventory.add_product(Product(2, "Phone", 50000, 20))
-    inventory.stock_in(1, 5)     # ₦500,000
-    inventory.stock_out(1, 2)   # ₦200,000
-    inventory.stock_in(2, 10)   # ₦500,000
-    inventory.stock_out(2, 4)   # ₦200,000
+    inventory.stock_in(1, 5)     # â‚¦500,000
+    inventory.stock_out(1, 2)   # â‚¦200,000
+    inventory.stock_in(2, 10)   # â‚¦500,000
+    inventory.stock_out(2, 4)   # â‚¦200,000
     summary = inventory.get_transaction_value_summary()
     assert summary == {"total_stock_in_value": 1000000, "total_stock_out_value": 400000,}
 def test_get_transaction_summary_repeated_transactions():
@@ -1787,7 +1787,7 @@ def test_get_transaction_summary_empty():
 def test_get_transaction_value_summary_empty():
     inventory = InventoryService()
     summary = inventory.get_transaction_value_summary()
-    assert summary == {"total_stock_in_value": 0, "total_stock_out_value": 0,} 
+    assert summary == {"total_stock_in_value": 0, "total_stock_out_value": 0,}
 def test_generate_inventory_report_contains_stock_movement():
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 100000, 10, "Electronics"))
@@ -1797,10 +1797,10 @@ def test_generate_inventory_report_contains_stock_movement():
     assert "Stock Movement:" in report
     assert "Stock-In Transactions: 1" in report
     assert "Stock-In Quantity: 5" in report
-    assert "Stock-In Value: ₦500,000.00" in report
+    assert "Stock-In Value: â‚¦500,000.00" in report
     assert "Stock-Out Transactions: 1" in report
     assert "Stock-Out Quantity: 2" in report
-    assert "Stock-Out Value: ₦200,000.00" in report   
+    assert "Stock-Out Value: â‚¦200,000.00" in report
 def test_generate_inventory_report_empty_stock_movement():
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 100000, 10, "Electronics"))
@@ -1808,10 +1808,10 @@ def test_generate_inventory_report_empty_stock_movement():
     assert "Stock Movement:" in report
     assert "Stock-In Transactions: 0" in report
     assert "Stock-In Quantity: 0" in report
-    assert "Stock-In Value: ₦0.00" in report
+    assert "Stock-In Value: â‚¦0.00" in report
     assert "Stock-Out Transactions: 0" in report
     assert "Stock-Out Quantity: 0" in report
-    assert "Stock-Out Value: ₦0.00" in report
+    assert "Stock-Out Value: â‚¦0.00" in report
 def test_save_inventory_report(tmp_path):
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 850000, 5, "Electronics"))
@@ -1822,7 +1822,7 @@ def test_save_inventory_report(tmp_path):
     assert "INVENTORY REPORT" in report
     assert "Total Products: 1" in report
     assert "Total Quantity: 5" in report
-    assert "Total Inventory Value: ₦4,250,000.00" in report
+    assert "Total Inventory Value: â‚¦4,250,000.00" in report
 def test_save_inventory_report_requires_file_path():
     inventory = InventoryService()
     with pytest.raises(ValueError, match="File path cannot be empty"):
@@ -2279,3 +2279,92 @@ def test_restore_inventory_backup_file_not_found(tmp_path):
     service = InventoryService()
     with pytest.raises(FileNotFoundError):
         service.restore_inventory_backup( backup_file, inventory_file,)
+
+def test_stock_in_converts_package_quantity_to_base_units():
+    inventory = InventoryService()
+
+    product = Product(1, "Eggs", 100, 0, "Food", base_unit="piece", purchase_units=[{"name": "crate", "base_quantity": 30}], selling_units=[{"name": "piece", "base_quantity": 1}], selling_price=150,)
+    inventory.add_product(product)
+    inventory.stock_in(1, 4, unit="crate", price=3000)
+    updated_product = inventory.get_product(1)
+    assert updated_product.quantity == 120
+
+
+def test_stock_out_converts_package_quantity_to_base_units():
+    inventory = InventoryService()
+
+    product = Product(1, "Eggs", 100, 60, "Food", base_unit="piece", selling_units=[ {"name": "crate", "base_quantity": 30}, {"name": "half crate", "base_quantity": 15}, {"name": "piece", "base_quantity": 1},], selling_price=150,)
+    inventory.add_product(product)
+    inventory.stock_out(1, 1, price=4500, reason="Sale", unit="half crate",)
+
+    updated_product = inventory.get_product(1)
+    assert updated_product.quantity == 45
+
+
+@pytest.mark.parametrize("invalid_price", [float("nan"), float("inf"), float("-inf")])
+def test_stock_in_rejects_non_finite_price(invalid_price):
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 10, 5)
+    inventory.add_product(product)
+    original_quantity = product.quantity
+    original_price = product.price
+
+    with pytest.raises(ValueError, match="finite"):
+        inventory.stock_in(1, 2, price=invalid_price)
+
+    assert product.quantity == original_quantity
+    assert product.price == original_price
+    assert inventory.get_transactions() == []
+
+
+@pytest.mark.parametrize("invalid_price", [float("nan"), float("inf"), float("-inf")])
+def test_stock_out_rejects_non_finite_price(invalid_price):
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 10, 5, selling_price=15)
+    inventory.add_product(product)
+    original_quantity = product.quantity
+
+    with pytest.raises(ValueError, match="finite"):
+        inventory.stock_out(1, 1, price=invalid_price, reason="Sale")
+
+    assert product.quantity == original_quantity
+    assert inventory.get_transactions() == []
+
+
+@pytest.mark.parametrize("invalid_quantity", [float("nan"), float("inf"), float("-inf")])
+def test_stock_in_package_conversion_rejects_non_finite_quantity(invalid_quantity):
+    inventory = InventoryService()
+    product = Product(1, "Eggs", 100, 10, base_unit="piece", purchase_units=[{"name": "crate", "base_quantity": 30}],)
+    inventory.add_product(product)
+
+    with pytest.raises(ValueError, match="finite"):
+        inventory.stock_in(1, invalid_quantity, unit="crate")
+
+    assert product.quantity == 10
+    assert inventory.get_transactions() == []
+
+
+@pytest.mark.parametrize("invalid_quantity", [float("nan"), float("inf"), float("-inf")])
+def test_stock_out_package_conversion_rejects_non_finite_quantity(invalid_quantity):
+    inventory = InventoryService()
+    product = Product(1, "Eggs", 100, 60, base_unit="piece", selling_units=[{"name": "crate", "base_quantity": 30}], selling_price=150,)
+    inventory.add_product(product)
+
+    with pytest.raises(ValueError, match="finite"):
+        inventory.stock_out(1, invalid_quantity, reason="Sale", unit="crate")
+
+    assert product.quantity == 60
+    assert inventory.get_transactions() == []
+
+
+@pytest.mark.parametrize("invalid_price", [float("nan"), float("inf"), float("-inf")])
+def test_update_product_rejects_non_finite_price(invalid_price):
+    inventory = InventoryService()
+    product = Product(1, "Laptop", 10, 5)
+    inventory.add_product(product)
+    original_price = product.price
+
+    with pytest.raises(ValueError, match="finite"):
+        inventory.update_product(1, price=invalid_price)
+
+    assert product.price == original_price
