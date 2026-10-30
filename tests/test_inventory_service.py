@@ -1280,7 +1280,7 @@ def test_generate_inventory_report_contains_summary():
     assert "INVENTORY REPORT" in report
     assert "Total Products: 1" in report
     assert "Total Quantity: 5" in report
-    assert "Total Inventory Value: â‚¦4,250,000.00" in report
+    assert "Total Inventory Value: ₦4,250,000.00" in report
 def test_generate_inventory_report_contains_stock_status():
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 850000, 3, "Electronics"))
@@ -1297,7 +1297,7 @@ def test_generate_inventory_report_contains_category_summary():
     assert "Electronics" in report
     assert "Products: 1" in report
     assert "Quantity: 5" in report
-    assert "Value: â‚¦4,250,000.00" in report
+    assert "Value: ₦4,250,000.00" in report
     assert "Accessories" in report
 def test_generate_inventory_report_empty_inventory():
     inventory = InventoryService()
@@ -1305,7 +1305,7 @@ def test_generate_inventory_report_empty_inventory():
     assert "INVENTORY REPORT" in report
     assert "Total Products: 0" in report
     assert "Total Quantity: 0" in report
-    assert "Total Inventory Value: â‚¦0.00" in report
+    assert "Total Inventory Value: ₦0.00" in report
     assert "Low Stock: 0" in report
     assert "Out of Stock: 0" in report
     assert "Categories:" in report
@@ -1317,7 +1317,7 @@ def test_generate_inventory_report_aggregates_category_data():
     assert "Electronics" in report
     assert "Products: 2" in report
     assert "Quantity: 8" in report
-    assert "Value: â‚¦5,000,000.00" in report
+    assert "Value: ₦5,000,000.00" in report
 def test_stock_in_rejects_boolean_product_id():
     inventory = InventoryService()
     with pytest.raises(ValueError, match="Product ID must be an integer"):
@@ -1754,10 +1754,10 @@ def test_get_transaction_value_summary_multiple_products():
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 100000, 10))
     inventory.add_product(Product(2, "Phone", 50000, 20))
-    inventory.stock_in(1, 5)     # â‚¦500,000
-    inventory.stock_out(1, 2)   # â‚¦200,000
-    inventory.stock_in(2, 10)   # â‚¦500,000
-    inventory.stock_out(2, 4)   # â‚¦200,000
+    inventory.stock_in(1, 5)     # ₦500,000
+    inventory.stock_out(1, 2)   # ₦200,000
+    inventory.stock_in(2, 10)   # ₦500,000
+    inventory.stock_out(2, 4)   # ₦200,000
     summary = inventory.get_transaction_value_summary()
     assert summary == {"total_stock_in_value": 1000000, "total_stock_out_value": 400000,}
 def test_get_transaction_summary_repeated_transactions():
@@ -1797,10 +1797,10 @@ def test_generate_inventory_report_contains_stock_movement():
     assert "Stock Movement:" in report
     assert "Stock-In Transactions: 1" in report
     assert "Stock-In Quantity: 5" in report
-    assert "Stock-In Value: â‚¦500,000.00" in report
+    assert "Stock-In Value: ₦500,000.00" in report
     assert "Stock-Out Transactions: 1" in report
     assert "Stock-Out Quantity: 2" in report
-    assert "Stock-Out Value: â‚¦200,000.00" in report
+    assert "Stock-Out Value: ₦200,000.00" in report
 def test_generate_inventory_report_empty_stock_movement():
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 100000, 10, "Electronics"))
@@ -1808,10 +1808,10 @@ def test_generate_inventory_report_empty_stock_movement():
     assert "Stock Movement:" in report
     assert "Stock-In Transactions: 0" in report
     assert "Stock-In Quantity: 0" in report
-    assert "Stock-In Value: â‚¦0.00" in report
+    assert "Stock-In Value: ₦0.00" in report
     assert "Stock-Out Transactions: 0" in report
     assert "Stock-Out Quantity: 0" in report
-    assert "Stock-Out Value: â‚¦0.00" in report
+    assert "Stock-Out Value: ₦0.00" in report
 def test_save_inventory_report(tmp_path):
     inventory = InventoryService()
     inventory.add_product(Product(1, "Laptop", 850000, 5, "Electronics"))
@@ -1822,7 +1822,7 @@ def test_save_inventory_report(tmp_path):
     assert "INVENTORY REPORT" in report
     assert "Total Products: 1" in report
     assert "Total Quantity: 5" in report
-    assert "Total Inventory Value: â‚¦4,250,000.00" in report
+    assert "Total Inventory Value: ₦4,250,000.00" in report
 def test_save_inventory_report_requires_file_path():
     inventory = InventoryService()
     with pytest.raises(ValueError, match="File path cannot be empty"):

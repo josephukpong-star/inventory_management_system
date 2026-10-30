@@ -6,7 +6,8 @@
 
     <title>Inventory Management System - Transactions</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
@@ -28,14 +29,15 @@
             <a href="/reports" class="nav-link">Reports</a>
 
             {% if is_admin %}
-                <a href="/financial-review" class="nav-link">Financial Review</a>
+                <a href="/financial-review" class="nav-link">
+                    Financial Review
+                </a>
             {% endif %}
 
             <a href="/backups" class="nav-link">Backups</a>
-             {% if is_admin %}
-            <a href="/staff" class="nav-link">
-                Staff Management
-            </a>
+
+            {% if is_admin %}
+                <a href="/staff" class="nav-link">Staff Management</a>
             {% endif %}
         </nav>
 
@@ -50,7 +52,7 @@
         <header class="top-header">
             <div>
                 <h1>Transactions</h1>
-                <p>View inventory stock movements and sales records.</p>
+                <p>View inventory movements and sales records.</p>
             </div>
 
             <div class="user-info">
@@ -62,15 +64,191 @@
         <section class="welcome-section">
             <h2>Transaction History</h2>
             <p>
-                Review recorded stock-in, stock-out, and sales transactions.
+                Search and filter stock movements, sales, and cancelled records.
             </p>
+        </section>
+
+        <section class="dashboard-section">
+
+            <div class="section-card transaction-filter-card">
+
+                <h2>Filter Transactions</h2>
+
+                <form method="GET"
+                      action="{{ url_for('transactions') }}"
+                      class="records-filter-card">
+
+                    <div class="filter-grid">
+
+                        <div class="form-group">
+                            <label for="search">Search Product</label>
+                            <input
+                                type="search"
+                                id="search"
+                                name="search"
+                                placeholder="Enter product name or ID"
+                                value="{{ search_query }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="type">Transaction Type</label>
+                            <select id="type" name="type">
+                                <option value=""
+                                    {% if not selected_type %}selected{% endif %}>
+                                    All Types
+                                </option>
+
+                                <option value="STOCK-IN"
+                                    {% if selected_type == "STOCK-IN" %}selected{% endif %}>
+                                    Stock-In
+                                </option>
+
+                                <option value="STOCK-OUT"
+                                    {% if selected_type == "STOCK-OUT" %}selected{% endif %}>
+                                    Stock-Out
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reason">Reason</label>
+                            <select id="reason" name="reason">
+                                <option value=""
+                                    {% if not selected_reason %}selected{% endif %}>
+                                    All Reasons
+                                </option>
+
+                                {% for reason in reasons %}
+                                    <option value="{{ reason }}"
+                                        {% if selected_reason == reason %}selected{% endif %}>
+                                        {{ reason }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="payment_method">Payment Method</label>
+                            <select id="payment_method" name="payment_method">
+                                <option value=""
+                                    {% if not selected_payment_method %}selected{% endif %}>
+                                    All Payment Methods
+                                </option>
+
+                                {% for payment_method in payment_methods %}
+                                    <option value="{{ payment_method }}"
+                                        {% if selected_payment_method == payment_method %}selected{% endif %}>
+                                        {{ payment_method }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="period">Date Period</label>
+                            <select id="period" name="period">
+                                <option value="all"
+                                    {% if selected_period == "all" %}selected{% endif %}>
+                                    All Time
+                                </option>
+
+                                <option value="today"
+                                    {% if selected_period == "today" %}selected{% endif %}>
+                                    Today
+                                </option>
+
+                                <option value="yesterday"
+                                    {% if selected_period == "yesterday" %}selected{% endif %}>
+                                    Yesterday
+                                </option>
+
+                                <option value="week"
+                                    {% if selected_period == "week" %}selected{% endif %}>
+                                    This Week
+                                </option>
+
+                                <option value="month"
+                                    {% if selected_period == "month" %}selected{% endif %}>
+                                    This Month
+                                </option>
+
+                                <option value="custom"
+                                    {% if selected_period == "custom" %}selected{% endif %}>
+                                    Custom Date Range
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="start_date">Start Date</label>
+                            <input
+                                type="date"
+                                id="start_date"
+                                name="start_date"
+                                value="{{ start_date }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="end_date">End Date</label>
+                            <input
+                                type="date"
+                                id="end_date"
+                                name="end_date"
+                                value="{{ end_date }}">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="status">Transaction Status</label>
+                            <select id="status" name="status">
+                                <option value=""
+                                    {% if not selected_status %}selected{% endif %}>
+                                    All Statuses
+                                </option>
+
+                                <option value="active"
+                                    {% if selected_status == "active" %}selected{% endif %}>
+                                    Active Transactions
+                                </option>
+
+                                <option value="cancelled"
+                                    {% if selected_status == "cancelled" %}selected{% endif %}>
+                                    Cancelled Transactions
+                                </option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <div class="filter-actions">
+                        <button type="submit" class="btn btn-primary">
+                            Apply Filters
+                        </button>
+
+                        <a href="{{ url_for('transactions') }}"
+                           class="btn btn-secondary">
+                            Clear Filters
+                        </a>
+                    </div>
+
+                </form>
+
+            </div>
+
         </section>
 
         <section class="dashboard-section">
 
             <div class="section-card">
 
-                <h2>Transactions</h2>
+                <div class="section-header">
+                    <div>
+                        <h2>Transaction Records</h2>
+                        <p>
+                            Matching records:
+                            <strong>{{ transactions|length }}</strong>
+                        </p>
+                    </div>
+                </div>
 
                 {% if transactions %}
 
@@ -80,6 +258,7 @@
 
                             <thead>
                                 <tr>
+                                    <th>Status</th>
                                     <th>Type</th>
                                     <th>Product</th>
                                     <th>Quantity</th>
@@ -89,26 +268,53 @@
                                         <th>Unit Price</th>
                                         <th>Transaction Value</th>
                                         <th>Inventory Cost</th>
+                                        <th>Payment Method</th>
                                     {% else %}
                                         <th>Selling Price</th>
                                         <th>Sales Amount</th>
                                     {% endif %}
 
                                     <th>Date &amp; Time</th>
+
+                                    {% if is_admin %}
+                                        <th>Actions</th>
+                                    {% endif %}
                                 </tr>
                             </thead>
 
                             <tbody>
 
-                                {% for transaction in transactions|reverse %}
+                                {% for transaction in transactions %}
 
                                     <tr>
                                         <td>
-                                            <strong>{{ transaction.get("type", "") }}</strong>
+                                            {% if transaction.get("cancelled", false) %}
+                                                <span class="status-danger">
+                                                    Cancelled
+                                                </span>
+                                            {% else %}
+                                                <span class="status-success">
+                                                    Recorded
+                                                </span>
+                                            {% endif %}
                                         </td>
 
                                         <td>
-                                            {{ transaction.get("product_name", "Unknown product") }}
+                                            <strong>
+                                                {{ transaction.get("type", "") }}
+                                            </strong>
+                                        </td>
+
+                                        <td>
+                                            {{ transaction.get(
+                                                "product_name",
+                                                "Unknown product"
+                                            ) }}
+                                            <br>
+                                            <small>
+                                                ID:
+                                                {{ transaction.get("product_id", "—") }}
+                                            </small>
                                         </td>
 
                                         <td>
@@ -116,7 +322,16 @@
                                         </td>
 
                                         <td>
-                                            {{ transaction.get("reason", "—") }}
+                                            {{ transaction.get("reason", "Unspecified") }}
+
+                                            {% if is_admin
+                                                  and transaction.get("cancelled")
+                                                  and transaction.get("cancellation_reason") %}
+                                                <br>
+                                                <small>
+                                                    {{ transaction.get("cancellation_reason") }}
+                                                </small>
+                                            {% endif %}
                                         </td>
 
                                         {% if is_admin %}
@@ -145,11 +360,20 @@
                                                 {% endif %}
                                             </td>
 
+                                            <td>
+                                                {% if transaction.get("reason") == "Sale" %}
+                                                    {{ transaction.get("payment_method", "Unspecified") }}
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+                                            </td>
+
                                         {% else %}
 
                                             <td>
                                                 {% if transaction.get("type") == "STOCK-OUT"
                                                       and transaction.get("reason") == "Sale"
+                                                      and not transaction.get("cancelled")
                                                       and transaction.get("price") is not none %}
                                                     ₦{{ "{:,.2f}".format(transaction.get("price", 0)) }}
                                                 {% else %}
@@ -159,7 +383,8 @@
 
                                             <td>
                                                 {% if transaction.get("type") == "STOCK-OUT"
-                                                      and transaction.get("reason") == "Sale" %}
+                                                      and transaction.get("reason") == "Sale"
+                                                      and not transaction.get("cancelled") %}
                                                     ₦{{ "{:,.2f}".format(transaction.get("sales_value", 0) or 0) }}
                                                 {% else %}
                                                     —
@@ -171,7 +396,51 @@
                                         <td>
                                             {{ transaction.get("timestamp", "") }}
                                         </td>
-                                    </tr>
+
+                                        {% if is_admin %}
+                                            <td>
+                                                {% if transaction.get("type") == "STOCK-OUT"
+                                                and transaction.get("reason") == "Sale"
+                                                and not transaction.get("cancelled")
+                                                and transaction.get("transaction_id") %}
+
+                                            <form
+                                                method="POST"
+                                                action="{{ url_for(
+                                                    'cancel_sale_route',
+                                                    transaction_id=transaction.get('transaction_id')
+                                                ) }}"
+                                                onsubmit="return confirm('Are you sure you want to cancel this sale? The stock will be restored and the sale will be excluded from financial totals.');"
+                                            >
+                                                <label>
+                                                    <span class="visually-hidden">
+                                                        Cancellation reason
+                                                    </span>
+
+                                                    <input
+                                                        type="text"
+                                                        name="cancellation_reason"
+                                                        placeholder="Reason for cancellation"
+                                                        required
+                                                        maxlength="250"
+                                                    >
+                                                </label>
+
+                                                <button type="submit" class="btn btn-danger">
+                                                    Cancel Sale
+                                                </button>
+                                            </form>
+
+                                        {% elif transaction.get("cancelled") %}
+                                            <span class="status-danger">
+                                                Already Cancelled
+                                            </span>
+
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
 
                                 {% endfor %}
 
@@ -183,7 +452,12 @@
 
                 {% else %}
 
-                    <p>No transactions found.</p>
+                    <p>No transactions match your selected filters.</p>
+
+                    <a href="{{ url_for('transactions') }}"
+                       class="btn btn-secondary">
+                        Clear Filters
+                    </a>
 
                 {% endif %}
 

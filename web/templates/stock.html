@@ -275,6 +275,22 @@
 
                     </div>
 
+                    <div class="form-group">
+                        <label for="stock_in_payment_method">Payment Method</label>
+
+                        <select
+                            id="stock_in_payment_method"
+                            name="payment_method"
+                            required
+                        >
+                            <option value="">Select payment method</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Credit">Credit</option>
+                        </select>
+                    </div>
+
                     <button
                         type="submit"
                         name="action"
@@ -393,6 +409,21 @@
             <option value="Other">Other</option>
         </select>
 
+        </div>
+
+        <div class="form-group" id="stock_out_payment_group">
+            <label for="stock_out_payment_method">Payment Method</label>
+
+            <select
+                id="stock_out_payment_method"
+                name="payment_method"
+            >
+                <option value="">Select payment method</option>
+                <option value="Cash">Cash</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Credit">Credit</option>
+            </select>
         </div>
 
         <button
@@ -519,6 +550,24 @@ document.addEventListener("DOMContentLoaded", function () {
         "stock_out_product_id",
         "stock_out_unit"
     );
+        // Show payment method only when Stock Out reason is Sale.
+    const stockOutReason = document.getElementById("stock_out_reason");
+    const paymentGroup = document.getElementById("stock_out_payment_group");
+    const paymentSelect = document.getElementById("stock_out_payment_method");
+
+    function updateStockOutPaymentMethod() {
+        const isSale = stockOutReason.value === "Sale";
+
+        paymentGroup.hidden = !isSale;
+        paymentSelect.required = isSale;
+
+        if (!isSale) {
+            paymentSelect.value = "";
+        }
+    }
+
+    stockOutReason.addEventListener("change", updateStockOutPaymentMethod);
+    updateStockOutPaymentMethod();
 });
 </script>
 

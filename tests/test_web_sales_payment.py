@@ -23,7 +23,7 @@ def test_sale_saves_selected_payment_method(client, tmp_path, monkeypatch):
 
     inventory_file.write_text(json.dumps(test_inventory), encoding="utf-8",)
 
-    monkeypatch.setattr(web_app, "DEFAULT_INVENTORY_FILE", str(inventory_file),)
+    monkeypatch.setattr(web_app, "INVENTORY_FILE", str(inventory_file),)
 
     response = client.post("/sales", data={"product_id": "999", "quantity": "2", "price": "150", "payment_method": "Bank Transfer",}, follow_redirects=False,)
 
@@ -42,7 +42,7 @@ def test_multiple_product_sale_saves_both_products_and_shared_reference(client, 
         "products": [{"product_id": 1001, "name": "Test Laptop", "category": "Electronics", "price": 500, "selling_price": 700, "quantity": 10,},{"product_id": 1002, "name": "Test Mouse", "category": "Accessories", "price": 100, "selling_price": 150, "quantity": 20,},], "transactions": [],}
 
     inventory_file.write_text(json.dumps(test_inventory), encoding="utf-8")
-    monkeypatch.setattr(web_app, "DEFAULT_INVENTORY_FILE", str(inventory_file))
+    monkeypatch.setattr(web_app, "INVENTORY_FILE", str(inventory_file),)
 
     response = client.post("/sales", data={"product_id": ["1001", "1002"], "quantity": ["2", "3"], "price": ["700", "150"], "payment_method": "Cash",}, follow_redirects=False,)
 

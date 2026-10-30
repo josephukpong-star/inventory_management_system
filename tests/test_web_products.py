@@ -15,7 +15,7 @@ def client():
 def authenticated_client(client, tmp_path, monkeypatch):
     import web.app as web_app
     inventory_file = tmp_path / "inventory.json"
-    monkeypatch.setattr(web_app, "DEFAULT_INVENTORY_FILE", str(inventory_file),)
+    monkeypatch.setattr(web_app, "INVENTORY_FILE", str(inventory_file))
 
     with client.session_transaction() as session:
         session["username"] = "test_admin"
@@ -38,7 +38,7 @@ def test_add_product_page_displays_basic_product_fields(authenticated_client):
     assert "Base Unit" in page
     assert "Cost Price per Base Unit" in page
     assert "Selling Price per Base Unit" in page
-    assert "Opening Quantity" in page
+    assert "Opening Quantity" not in page
 
     # The single purchase unit and selling unit fields must be available.
     assert 'name="purchase_unit_name"' in page
@@ -59,6 +59,11 @@ def test_add_product_saves_single_purchase_and_selling_unit(authenticated_client
     client, inventory_file = authenticated_client
 
     response = client.post("/products/add", data={"product_id": "101", "name": "Eggs", "category": "Food", "price": "100", "selling_price": "150", "quantity": "300", "base_unit": "piece", "purchase_unit_name": "crate", "purchase_unit_factor": "30", "selling_unit_name": "half crate", "selling_unit_factor": "15",}, follow_redirects=False,)
+    page = response.get_data(as_text=True)
+
+    if "form-error" in page:
+        start = page.find("form-error")
+        print("\nVALIDATION MESSAGE:\n", page[start:start + 500])
 
     assert response.status_code == 302
     assert inventory_file.exists()
@@ -70,7 +75,7 @@ def test_add_product_saves_single_purchase_and_selling_unit(authenticated_client
     assert saved_product["name"] == "Eggs"
     assert saved_product["price"] == 100
     assert saved_product["selling_price"] == 150
-    assert saved_product["quantity"] == 300
+    assert saved_product["quantity"] == 0
     assert saved_product["base_unit"] == "piece"
 
     assert saved_product["purchase_units"] == [{"name": "crate", "base_quantity": 30}]

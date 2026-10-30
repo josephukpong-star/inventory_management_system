@@ -150,7 +150,7 @@ def test_staff_cannot_restore_backup(client):
 
 def test_staff_cannot_see_financial_values_in_backup(client, tmp_path, monkeypatch):
     import web.app as web_app
-    monkeypatch.setattr(web_app, "DEFAULT_BACKUP_DIRECTORY", str(tmp_path),)
+    monkeypatch.setattr(web_app, "BACKUP_DIRECTORY", str(tmp_path),)
     create_test_backup(tmp_path)
     login_as(client, "test_staff", "Staff")
 
@@ -165,7 +165,7 @@ def test_staff_cannot_see_financial_values_in_backup(client, tmp_path, monkeypat
 
 def test_admin_can_see_financial_values_in_backup(client, tmp_path, monkeypatch):
     import web.app as web_app
-    monkeypatch.setattr(web_app, "DEFAULT_BACKUP_DIRECTORY", str(tmp_path),)
+    monkeypatch.setattr(web_app, "BACKUP_DIRECTORY", str(tmp_path),)
     create_test_backup(tmp_path)
     login_as(client, "test_admin", "Admin")
     response = client.get("/view-backup", query_string={"backup_file": "test_backup.json"},)

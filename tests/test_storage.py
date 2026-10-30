@@ -1,6 +1,7 @@
 ﻿import json
 import os
 import pytest
+from datetime import date
 from app.models import Product
 from app.storage import (save_products, load_products, save_inventory_data, load_inventory_data, save_inventory_report, backup_inventory_data, create_inventory_backup, restore_inventory_data,)
 def test_save_products(tmp_path):
@@ -9,7 +10,7 @@ def test_save_products(tmp_path):
     save_products(products, file_path)
     with open(file_path, "r") as file:
         data = json.load(file)
-    assert data == [{"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Uncategorized",},{"product_id": 2, "name": "Mouse", "price": 15000, "quantity": 10, "category": "Uncategorized",},]
+    assert data == [{"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Uncategorized", "date_added": date.today().isoformat(),},{"product_id": 2, "name": "Mouse", "price": 15000, "quantity": 10, "category": "Uncategorized", "date_added": date.today().isoformat(),},]
 def test_load_products(tmp_path):
     products = [Product(1, "Laptop", 850000, 5), Product(2, "Mouse", 15000, 10),]
     file_path = tmp_path / "products.json"

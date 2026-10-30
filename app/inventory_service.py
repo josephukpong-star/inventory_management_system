@@ -1,4 +1,5 @@
 ﻿import math
+import uuid
 from datetime import datetime
 from app.config import (DEFAULT_LOW_STOCK_THRESHOLD, DEFAULT_REPORT_TITLE, DEFAULT_CURRENCY_SYMBOL,)
 from app.models import Product
@@ -30,11 +31,116 @@ class InventoryService:
         return {"total_stock_in_value": sum(transaction["total_value"] for transaction in stock_in_transactions), "total_stock_out_value": sum(transaction["total_value"] for transaction in stock_out_transactions),}
     def save_inventory(self, file_path):
         save_inventory_data(self.products, self.transactions, file_path, self.removed_products, self.deleted_products, self.deleted_record_counter,)
+
+    def cancel_sale(self, transaction_id, reason, file_path):
+        """Cancel an entire sale, restore its stock, and preserve its records."""
+
+        if not isinstance(transaction_id, str) or not transaction_id.strip():
+            raise ValueError("A valid transaction ID is required.")
+
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("A cancellation reason is required.")
+
+        # Locate the selected transaction.
+        transaction = next((item for item in self.transactions if item.get("transaction_id") == transaction_id), None,)
+
+        if transaction is None:
+            raise ValueError("Transaction not found.")
+
+        if transaction.get("type") != "STOCK-OUT":
+            raise ValueError("Only stock-out transactions can be cancelled.")
+
+        if transaction.get("reason") != "Sale":
+            raise ValueError("Only sales transactions can be cancelled.")
+
+        if transaction.get("cancelled", False):
+            raise ValueError("This sale has already been cancelled.")
+
+        sale_reference = transaction.get("sale_reference")
+
+        # New sales have a shared reference. Older transactions may not.
+        if sale_reference:
+            sale_transactions = [item for item in self.transactions if item.get("sale_reference") == sale_reference]
+        else:
+            # Legacy transaction: cancel only the selected record.
+            sale_transactions = [transaction]
+
+        # Validate every line before changing stock.
+        restoration_lines = []
+
+        for item in sale_transactions:
+            if item.get("cancelled", False):
+                raise ValueError("This sale contains an already-cancelled transaction.")
+
+        if (item.get("type") != "STOCK-OUT" or item.get("reason") != "Sale"):
+            raise ValueError("The sale contains an invalid transaction record.")
+
+        product = self.get_product(item["product_id"])
+
+        quantity_to_restore = item.get("base_quantity", item.get("quantity"),)
+
+        if (isinstance(quantity_to_restore, bool) or not isinstance(quantity_to_restore, (int, float)) or not math.isfinite(quantity_to_restore) or quantity_to_restore <= 0):
+            raise ValueError("A recorded sale quantity is invalid.")
+
+        restoration_lines.append((item, product, quantity_to_restore))
+
+        # Snapshot quantities and cancellation metadata for rollback.
+        original_quantities = {product.product_id: product.quantity for product in self.products}
+
+        cancellation_fields = ("cancelled", "cancellation_reason", "cancelled_at",)
+
+        original_metadata = [{field: (field in item, item.get(field)) for field in cancellation_fields} for item, _, _ in restoration_lines]
+
+        cancelled_at = datetime.now().isoformat()
+
+        try:
+            # Restore stock and mark every line as cancelled.
+            for item, product, quantity_to_restore in restoration_lines:
+                self.update_quantity(product.product_id, quantity_to_restore,)
+
+                item["cancelled"] = True
+                item["cancellation_reason"] = reason.strip()
+                item["cancelled_at"] = cancelled_at
+
+            # Persist the complete change.
+            self.save_inventory(file_path)
+
+        except Exception:
+            # Restore original stock quantities.
+            for product in self.products:
+                if product.product_id in original_quantities:
+                    product.quantity = original_quantities[product.product_id]
+
+            # Restore the original cancellation metadata.
+            for (item, _, _), metadata in zip(restoration_lines, original_metadata,):
+                for field, (existed, value) in metadata.items():
+                    if existed:
+                        item[field] = value
+                    else:
+                        item.pop(field, None)
+
+            raise
+
+        return transaction
+
     def create_backup(self, file_path, backup_directory):
         return create_inventory_backup(file_path, backup_directory)
     def list_backups(self, backup_directory):
         return list_inventory_backups(backup_directory)
-    def load_inventory(self, file_path):(self.products, self.transactions, self.removed_products, self.deleted_products, self.deleted_record_counter,) = load_inventory_data(file_path, return_full_state=True)
+    def load_inventory(self, file_path):
+        (self.products, self.transactions, self.removed_products, self.deleted_products, self.deleted_record_counter,) = load_inventory_data(file_path, return_full_state=True)
+
+        # Assign stable IDs to legacy transactions that don't have one.
+        missing_transaction_ids = False
+
+        for transaction in self.transactions:
+            if not transaction.get("transaction_id"):
+                transaction["transaction_id"] = str(uuid.uuid4())
+                missing_transaction_ids = True
+
+        # Persist the IDs so they remain stable after future reloads.
+        if missing_transaction_ids:
+            self.save_inventory(file_path)
     def restore_inventory(self, backup_file_path, file_path):
         from app.storage import restore_inventory_data
         restore_inventory_data(backup_file_path, file_path)
@@ -68,13 +174,29 @@ class InventoryService:
         if new_quantity < 0:
             raise ValueError("Quantity cannot be negative")
         product.quantity = new_quantity
-    def _record_transaction(self, product, transaction_type, quantity, price=None, inventory_cost=None,):
+
+    def _record_transaction(self, product, transaction_type, quantity, price=None, inventory_cost=None, payment_method=None,):
         if price is None:
             price = product.price
+
         if inventory_cost is None:
             inventory_cost = product.price * quantity
+
         sales_value = 0
-        self.transactions.append({"product_id": product.product_id, "product_name": product.name, "price": price, "type": transaction_type, "quantity": quantity, "total_value": price * quantity, "inventory_cost": inventory_cost, "sales_value": sales_value, "timestamp": datetime.now().isoformat(),})
+
+        self.transactions.append({
+        "transaction_id": str(uuid.uuid4()),
+        "product_id": product.product_id,
+        "product_name": product.name,
+        "price": price,
+        "type": transaction_type,
+        "quantity": quantity,
+        "total_value": price * quantity,
+        "inventory_cost": inventory_cost,
+        "sales_value": sales_value,
+        "timestamp": datetime.now().isoformat(),})
+        if payment_method is not None:
+            self.transactions[-1]["payment_method"] = payment_method
 
     def _convert_to_base_units(self, product, quantity, unit, unit_type):
         # Preserve the existing behavior when no package is specified.
@@ -114,8 +236,12 @@ class InventoryService:
 
         return base_quantity, selected_unit["name"], factor
 
-    def stock_in(self, product_id, quantity, price=None, unit=None):
+    def stock_in(self, product_id, quantity, price=None, unit=None, payment_method=None):
         self._validate_product_id(product_id)
+        valid_payment_methods = {"Cash", "Bank Transfer", "Cheque", "Credit",}
+
+        if payment_method is not None and payment_method not in valid_payment_methods:
+            raise ValueError("Invalid stock-in payment method.")
 
         # Preserve legacy quantity validation before product lookup.
         if unit is None:
@@ -160,7 +286,7 @@ class InventoryService:
         self.update_quantity(product_id, base_quantity)
         product.price = new_average_cost
 
-        self._record_transaction(product, "STOCK-IN", base_quantity, price=purchase_cost_per_base_unit, inventory_cost=total_purchase_cost,)
+        self._record_transaction(product, "STOCK-IN", base_quantity, price=purchase_cost_per_base_unit, inventory_cost=total_purchase_cost, payment_method=payment_method,)
         transaction = self.transactions[-1]
 
         # Preserve the original purchase details.
@@ -171,10 +297,17 @@ class InventoryService:
         transaction["entered_price"] = entered_price
         transaction["total_value"] = total_purchase_cost
 
-    def stock_out(self, product_id, quantity, price=None, reason="Other", unit=None,):
+    def stock_out(self, product_id, quantity, price=None, reason="Other", unit=None, payment_method=None,):
         self._validate_product_id(product_id)
 
         valid_reasons = {"Sale", "Damaged Goods", "Internal Use", "Gift/Free Issue", "Other",}
+        valid_payment_methods = {"Cash", "Bank Transfer", "Cheque", "Credit",}
+
+        if reason == "Sale":
+            if (payment_method is not None and payment_method not in valid_payment_methods):
+                raise ValueError("Invalid sale payment method.")
+        else:
+            payment_method = None
 
         if reason not in valid_reasons:
             raise ValueError("Invalid stock-out reason")
@@ -200,55 +333,91 @@ class InventoryService:
 
         inventory_cost = product.price * base_quantity
 
-        # Preserve the original base-unit behavior.
+                # Calculate the selling price using the selected unit.
         if unit is None:
             transaction_price = price
-            sales_value = (price * base_quantity if reason == "Sale" and price is not None else 0)
+            sales_value = (
+                price * base_quantity
+                if reason == "Sale" and price is not None
+                else 0
+            )
         else:
-           transaction_price = ( product.selling_price * factor if price is None else price )
-           sales_value = ( transaction_price * quantity if reason == "Sale" else 0 )
+            # Package selling price is based on the base-unit selling price.
+            transaction_price = product.selling_price * factor
+
+            sales_value = (
+                transaction_price * quantity
+                if reason == "Sale"
+                else 0
+            )
 
         # Reject insufficient stock before recording a transaction.
         self.update_quantity(product_id, -base_quantity)
 
-        # Record every valid stock-out, whether or not a package was selected.
-        self._record_transaction(product, "STOCK-OUT", base_quantity, price=transaction_price, inventory_cost=inventory_cost,)
+        # Record the transaction using the entered quantity so the
+        # transaction list displays the quantity the user selected.
+        self._record_transaction(product, "STOCK-OUT", quantity, price=transaction_price, inventory_cost=inventory_cost, payment_method=payment_method,)
 
         transaction = self.transactions[-1]
         transaction["reason"] = reason
         transaction["inventory_cost"] = inventory_cost
         transaction["sales_value"] = sales_value
 
-        # Preserve package details for package-based transactions.
+        # Preserve both entered and base-unit quantities.
         transaction["entered_quantity"] = quantity
         transaction["unit"] = selected_unit
         transaction["conversion_factor"] = factor
         transaction["base_quantity"] = base_quantity
         transaction["entered_price"] = transaction_price
+
+        # Keep transaction values consistent with the reason.
         transaction["total_value"] = (sales_value if reason == "Sale" else inventory_cost)
-    def update_product(self, product_id, name=None, price=None, category=None):
+        transaction["total_value"] = (sales_value if reason == "Sale" else inventory_cost)
+
+    def update_product(self, product_id, name=None, price=None, category=None, selling_price=None, base_unit=None, purchase_units=None, selling_units=None,):
         product = self.get_product(product_id)
+
         if name is not None:
-            if not name or not name.strip():
+            if not isinstance(name, str) or not name.strip():
                 raise ValueError("Product name cannot be empty")
             product.name = name.strip().title()
 
         if price is not None:
             if isinstance(price, bool) or not isinstance(price, (int, float)):
                 raise ValueError("Price must be a number")
-
             if not math.isfinite(price):
                 raise ValueError("Price must be finite")
-
             if price < 0:
                 raise ValueError("Price cannot be negative")
-
             product.price = price
 
+        if selling_price is not None:
+            if isinstance(selling_price, bool) or not isinstance(selling_price, (int, float)):
+                raise ValueError("Selling price must be a number")
+            if not math.isfinite(selling_price):
+                raise ValueError("Selling price must be finite")
+            if selling_price < 0:
+                raise ValueError("Selling price cannot be negative")
+            product.selling_price = selling_price
+
         if category is not None:
-            if not category or not category.strip():
+            if not isinstance(category, str) or not category.strip():
                 raise ValueError("Category cannot be empty")
             product.category = category.strip().title()
+
+        if base_unit is not None:
+            if not isinstance(base_unit, str) or not base_unit.strip():
+                raise ValueError("Base unit cannot be empty")
+            product.base_unit = base_unit.strip().lower()
+
+        if purchase_units is not None:
+            Product._validate_units(purchase_units, "Purchase")
+            product.purchase_units = Product._normalize_units(purchase_units)
+
+        if selling_units is not None:
+            Product._validate_units(selling_units, "Selling")
+            product.selling_units = Product._normalize_units(selling_units)
+
     def remove_product(self, product_id):
         product = self.get_product(product_id)
         self.products.remove(product)

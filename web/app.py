@@ -13,6 +13,20 @@ from app.config import DEFAULT_INVENTORY_FILE, DEFAULT_BACKUP_DIRECTORY
 
 load_dotenv()
 
+# Keep test data separate from the normal inventory and backups.
+TEST_MODE = os.getenv("IMS_TEST_MODE", "false").casefold() in {
+    "true",
+    "1",
+    "yes",
+}
+
+if TEST_MODE:
+    INVENTORY_FILE = "data/inventory_test.json"
+    BACKUP_DIRECTORY = "data/test_backups"
+else:
+    INVENTORY_FILE = DEFAULT_INVENTORY_FILE
+    BACKUP_DIRECTORY = DEFAULT_BACKUP_DIRECTORY
+
 app = Flask(__name__)
 
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
@@ -213,7 +227,7 @@ def add_staff():
 @login_required
 def dashboard():
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     dashboard_data = inventory_service.get_dashboard_data()
     transactions = inventory_service.get_transactions()
@@ -236,7 +250,7 @@ def add_product():
         return "Please log in first."
 
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     if request.method == "POST":
         try:
@@ -244,7 +258,7 @@ def add_product():
             name = request.form.get("name", "").strip()
             price = float(request.form.get("price", ""))
             selling_price = float(request.form.get("selling_price", ""))
-            quantity = int(request.form.get("quantity", ""))
+            quantity = 0
             category = request.form.get("category", "").strip() or "Uncategorized"
 
             # Preserve compatibility with older product submissions.
@@ -285,7 +299,7 @@ def add_product():
 
             product = Product(product_id, name, price, quantity, category, base_unit=base_unit, purchase_units=purchase_units, selling_units=selling_units, selling_price=selling_price,)
             inventory_service.add_product(product)
-            inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+            inventory_service.save_inventory(INVENTORY_FILE)
             flash("Product added successfully!", "success")
             return redirect(url_for("products"))
 
@@ -297,12 +311,12 @@ def add_product():
 @admin_required
 def remove_product():
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     product_id = int(request.form.get("product_id"))
 
     inventory_service.remove_product(product_id)
-    inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.save_inventory(INVENTORY_FILE)
 
     return redirect(url_for("products"))
 
@@ -312,7 +326,7 @@ def deleted_history():
         return "Please log in first."
 
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     deleted_products = inventory_service.get_deleted_products()
 
@@ -322,12 +336,12 @@ def deleted_history():
 @admin_required
 def restore_product():
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     product_id = int(request.form.get("product_id"))
 
     inventory_service.restore_product(product_id)
-    inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.save_inventory(INVENTORY_FILE)
 
     return redirect(url_for("products"))
 
@@ -335,12 +349,12 @@ def restore_product():
 @admin_required
 def permanently_delete_product():
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     product_id = int(request.form.get("product_id"))
 
     inventory_service.permanently_delete_product(product_id)
-    inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.save_inventory(INVENTORY_FILE)
 
     return redirect(url_for("removed_products"))
 
@@ -350,7 +364,7 @@ def removed_products():
         return "Please log in first."
 
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     removed_products = inventory_service.removed_products
 
@@ -362,26 +376,123 @@ def update_product():
         return "Please log in first."
 
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     if request.method == "POST":
-        product_id = int(request.form.get("product_id"))
+        try:
+            product_id = int(request.form.get("product_id", ""))
 
-        name = request.form.get("name")
-        price_input = request.form.get("price")
-        category = request.form.get("category")
+            name = request.form.get("name", "").strip()
+            price_input = request.form.get("price", "").strip()
+            selling_price_input = request.form.get("selling_price", "").strip()
+            category = request.form.get("category", "").strip()
+            base_unit = request.form.get("base_unit", "").strip()
 
-        price = float(price_input) if price_input else None
+            def read_units(name_field, factor_field):
+                unit_names = request.form.getlist(name_field)
+                unit_factors = request.form.getlist(factor_field)
 
-        inventory_service.update_product(product_id, name=name or None, price=price, category=category or None,)
+                if len(unit_names) != len(unit_factors):
+                    raise ValueError(
+                        "Each packaging unit must have a matching conversion factor."
+                    )
 
-        inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+                units = []
 
-        return redirect(url_for("products"))
+                for unit_name, factor_text in zip(unit_names, unit_factors):
+                    unit_name = unit_name.strip()
+                    factor_text = factor_text.strip()
+
+                    if not unit_name and not factor_text:
+                        continue
+
+                    if not unit_name or not factor_text:
+                        raise ValueError(
+                            "Enter both the unit name and conversion factor."
+                        )
+
+                    try:
+                        factor = float(factor_text)
+                    except ValueError:
+                        raise ValueError(
+                            "Conversion factors must be valid numbers."
+                        ) from None
+
+                    if not math.isfinite(factor) or factor <= 0:
+                        raise ValueError(
+                            "Conversion factors must be positive, finite numbers."
+                        )
+
+                    units.append({
+                        "name": unit_name,
+                        "base_quantity": (
+                            int(factor) if factor.is_integer() else factor
+                        ),
+                    })
+
+                return units
+
+            purchase_units = read_units(
+                "purchase_unit_name",
+                "purchase_unit_factor",
+            )
+            selling_units = read_units(
+                "selling_unit_name",
+                "selling_unit_factor",
+            )
+
+            inventory_service.update_product(
+                product_id,
+                name=name or None,
+                price=float(price_input) if price_input else None,
+                selling_price=(
+                    float(selling_price_input)
+                    if selling_price_input
+                    else None
+                ),
+                category=category or None,
+                base_unit=base_unit or None,
+                purchase_units=purchase_units,
+                selling_units=selling_units,
+            )
+
+            inventory_service.save_inventory(INVENTORY_FILE)
+
+            flash("Product updated successfully!", "success")
+            return redirect(url_for("products"))
+
+        except (ValueError, TypeError, OverflowError) as exc:
+            flash(f"Unable to update product: {exc}", "error")
+            return redirect(
+                url_for(
+                    "update_product",
+                    product_id=request.form.get("product_id", ""),
+                )
+            )
 
     product_id = request.args.get("product_id", "")
 
-    return render_template("update_product.html", username=session["username"], role=session["role"], product_id=product_id,)
+    try:
+        product = (
+            inventory_service.get_product(int(product_id))
+            if product_id
+            else None
+        )
+    except (ValueError, TypeError):
+        product = None
+
+    if product_id and product is None:
+        flash("Product not found.", "error")
+        return redirect(url_for("products"))
+
+    return render_template(
+        "update_product.html",
+        username=session["username"],
+        role=session["role"],
+        is_admin=session.get("role") == "admin",
+        product=product,
+        product_id=product_id,
+    )
 
 @app.route("/products")
 def products():
@@ -389,7 +500,7 @@ def products():
         return "Please log in first."
 
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     products = inventory_service.products
 
@@ -401,7 +512,7 @@ def stock():
         return "Please log in first."
 
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     if request.method == "POST":
         action = request.form.get("action")
@@ -417,19 +528,24 @@ def stock():
             price = float(request.form.get("price", ""))
 
             if action == "stock_in":
-                inventory_service.stock_in(product_id, quantity, price=price, unit=unit,)
+                payment_method = request.form.get("payment_method", "").strip()
+
+                inventory_service.stock_in(product_id, quantity, price=price, unit=unit, payment_method=payment_method,)
+
                 success_message = "Stock In completed successfully."
 
             elif action == "stock_out":
                 reason = request.form.get("reason", "Other").strip()
 
-                inventory_service.stock_out(product_id, quantity, price=price, reason=reason, unit=unit,)
+                payment_method = (request.form.get("payment_method", "").strip() if reason == "Sale" else None)
+
+                inventory_service.stock_out(product_id, quantity, price=price, reason=reason, unit=unit, payment_method=payment_method,)
 
                 success_message = "Stock Out completed successfully."
 
             else:
                 raise ValueError("Please select a valid stock action.")
-            inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+            inventory_service.save_inventory(INVENTORY_FILE)
             flash(success_message, "success")
 
         except (ValueError, TypeError, OverflowError) as error:
@@ -445,7 +561,7 @@ def sales():
         return "Please log in first."
 
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     if request.method == "POST":
         try:
@@ -453,6 +569,11 @@ def sales():
             product_ids = request.form.getlist("product_id")
             quantities = request.form.getlist("quantity")
             prices = request.form.getlist("price")
+            selling_units = request.form.getlist("selling_unit")
+
+            # Support older forms that submit quantities in the base unit.
+            if not selling_units:
+                selling_units = [""] * len(product_ids)
 
             payment_method = request.form.get("payment_method", "").strip()
 
@@ -461,24 +582,34 @@ def sales():
             if payment_method not in valid_payment_methods:
                 raise ValueError("Please select a valid payment method.")
 
-            # Require at least one complete product line.
+            # Require at least one product line.
             if not product_ids:
                 raise ValueError("Please add at least one product to the sale.")
 
-            if not (len(product_ids) == len(quantities) == len(prices)):
+            # Every product line must contain all required fields.
+            if not (len(product_ids) == len(quantities) == len(prices) == len(selling_units)):
                 raise ValueError("The sale contains incomplete product lines. " "Please review the form and try again.")
 
             # Validate every line before changing inventory.
             validated_lines = []
             seen_product_ids = set()
 
-            for raw_product_id, raw_quantity, raw_price in zip(product_ids, quantities, prices):
+            for (raw_product_id, raw_quantity, raw_price, raw_unit,) in zip(product_ids, quantities, prices, selling_units,):
                 try:
                     product_id = int(raw_product_id)
                     quantity = int(raw_quantity)
                     price = float(raw_price)
                 except (ValueError, TypeError):
-                    raise ValueError("Each product line must have a valid " "product, whole-number quantity, " "and selling price.")
+                    raise ValueError("Each product line must have a valid product, " "whole-number quantity, and selling price.")
+
+                unit = raw_unit.strip().lower()
+
+                product = inventory_service.get_product(product_id)
+
+                if not unit:
+                    # Legacy products may use the default "unit" base unit.
+                    # Preserve the original stock-out behavior for those products.
+                    unit = None if product.base_unit == "unit" else product.base_unit
 
                 if quantity <= 0:
                     raise ValueError("Sale quantities must be greater than zero.")
@@ -493,64 +624,227 @@ def sales():
 
                 product = inventory_service.get_product(product_id)
 
-                if quantity > product.quantity:
-                    raise ValueError(f"Insufficient stock for {product.name}. " f"Available: {product.quantity}; " f"requested: {quantity}.")
+                # Validate the selected unit and convert the requested
+                # quantity to the product's base unit without changing stock.
+                if unit is None:
+                    # Legacy/default products use the original base-unit behavior.
+                    base_quantity = quantity
+                    selected_unit = None
+                    factor = 1
+                else:
+                    base_quantity, selected_unit, factor = (inventory_service._convert_to_base_units(product, quantity, unit, "Stock-out",))
 
-                validated_lines.append({"product_id": product_id, "quantity": quantity, "price": price,})
+                if base_quantity <= 0:
+                    raise ValueError("Sale quantities must be greater than zero.")
 
-            # Preserve the in-memory state before making changes.
+                if base_quantity > product.quantity:
+                    raise ValueError(f"Insufficient stock for {product.name}. " f"Available: {product.quantity} " f"{product.base_unit}; " f"requested: {base_quantity} " f"{product.base_unit}.")
+
+                validated_lines.append({"product_id": product_id, "quantity": quantity, "price": price, "unit": selected_unit, "base_quantity": base_quantity, "conversion_factor": factor,})
+
+            # Preserve the in-memory state before changing inventory.
             original_quantities = {product.product_id: product.quantity for product in inventory_service.products}
+
             original_transactions = copy.deepcopy(inventory_service.transactions)
 
-            # Create one reference shared by every line in this sale.
+            # One reference shared by all lines in this sale.
             sale_reference = (f"SALE-{datetime.now().strftime('%Y%m%d%H%M%S%f')}")
 
             try:
                 for line in validated_lines:
-                    inventory_service.stock_out(line["product_id"], line["quantity"], price=line["price"], reason="Sale",)
+                    inventory_service.stock_out(line["product_id"], line["quantity"], price=line["price"], reason="Sale", unit=line["unit"],)
 
                     transaction = inventory_service.transactions[-1]
                     transaction["payment_method"] = payment_method
                     transaction["sale_reference"] = sale_reference
 
-                # Persist only after all lines have been processed.
-                inventory_service.save_inventory(DEFAULT_INVENTORY_FILE)
+                # Save only after every product line succeeds.
+                inventory_service.save_inventory(INVENTORY_FILE)
 
             except Exception:
-                # Restore in-memory stock and transaction history.
+                # Restore in-memory stock and transaction history if
+                # processing or saving fails.
                 for product in inventory_service.products:
                     if product.product_id in original_quantities:
                         product.quantity = original_quantities[product.product_id]
+
                 inventory_service.transactions = original_transactions
                 raise
 
             flash(f"Sale recorded successfully. " f"Sale reference: {sale_reference}", "success",)
+
         except (ValueError, TypeError) as error:
+            app.logger.exception("Sale validation or processing failed.")
             flash(str(error), "error")
 
         except OSError:
             app.logger.exception("Failed to save the sale.")
+
             flash("The sale could not be saved because of a storage error. " "Please check the inventory before trying again.", "error",)
 
         return redirect(url_for("sales"))
+
     products = inventory_service.products
+
     return render_template("sales.html", username=session["username"], role=session["role"], products=products,)
 
 @app.route("/transactions")
 @login_required
 def transactions():
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
-    transactions = inventory_service.get_transactions()
+    inventory_service.load_inventory(INVENTORY_FILE)
+
+    all_transactions = inventory_service.get_transactions()
+
+    # Apply staff restrictions before passing transaction data to the template.
     if not is_admin_user():
-        transactions = [ safe_transaction_for_staff(transaction) for transaction in transactions ]
-    return render_template( "transactions.html", username=session["username"], role=session["role"], transactions=transactions, )
+        all_transactions = [safe_transaction_for_staff(transaction) for transaction in all_transactions]
+
+    search_query = request.args.get("search", "").strip().casefold()
+    transaction_type = request.args.get("type", "").strip().upper()
+    reason_filter = request.args.get("reason", "").strip()
+    payment_filter = request.args.get("payment_method", "").strip()
+    period = request.args.get("period", "all").strip().lower()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+    status_filter = request.args.get("status", "").strip().lower()
+
+    today = date.today()
+    date_from = None
+    date_to = None
+
+    if period == "today":
+        date_from = today
+        date_to = today
+    elif period == "yesterday":
+        date_from = today - timedelta(days=1)
+        date_to = date_from
+    elif period == "week":
+        date_from = today - timedelta(days=today.weekday())
+        date_to = today
+    elif period == "month":
+        date_from = today.replace(day=1)
+        date_to = today
+    elif period == "custom":
+        try:
+            if start_date:
+                date_from = date.fromisoformat(start_date)
+            if end_date:
+                date_to = date.fromisoformat(end_date)
+
+            if date_from and date_to and date_from > date_to:
+                flash("The start date cannot be after the end date.", "error")
+                date_from = None
+                date_to = None
+                period = "all"
+        except ValueError:
+            flash("Please enter valid custom dates.", "error")
+            date_from = None
+            date_to = None
+            period = "all"
+
+    filtered_transactions = []
+
+    for transaction in all_transactions:
+        original_transaction = transaction
+
+        # Cancellation information is retained only for safe display.
+        is_cancelled = bool(original_transaction.get("cancelled", False))
+
+        if status_filter == "cancelled" and not is_cancelled:
+            continue
+        if status_filter == "active" and is_cancelled:
+            continue
+
+        current_type = str(transaction.get("type", "")).upper()
+        if transaction_type and current_type != transaction_type:
+            continue
+
+        current_reason = str(transaction.get("reason", "Unspecified"))
+        if reason_filter and current_reason != reason_filter:
+            continue
+
+        current_payment = str(transaction.get("payment_method") or "Unspecified")
+        if payment_filter and current_payment != payment_filter:
+            continue
+
+        if search_query:
+            product_name = str(transaction.get("product_name", "Unknown product")).casefold()
+            product_id = str(transaction.get("product_id", ""))
+
+            if (search_query not in product_name and search_query not in product_id.casefold()):
+                continue
+
+        timestamp = str(transaction.get("timestamp", ""))
+        transaction_date = None
+
+        try:
+            if timestamp:
+                transaction_date = datetime.fromisoformat(timestamp.replace("Z", "+00:00")).date()
+        except ValueError:
+            transaction_date = None
+
+        if date_from and (transaction_date is None or transaction_date < date_from):
+            continue
+
+        if date_to and (transaction_date is None or transaction_date > date_to):
+            continue
+
+        # Add safe display metadata without exposing other original fields.
+        if is_admin_user():
+            display_transaction = dict(transaction)
+        else:
+            display_transaction = {"product_id": transaction.get("product_id"), "product_name": transaction.get("product_name", "Unknown product"), "type": transaction.get("type"), "quantity": transaction.get("quantity", 0), "timestamp": transaction.get("timestamp", ""), "reason": transaction.get("reason", ""), "cancelled": is_cancelled,}
+
+            is_sale = (transaction.get("type") == "STOCK-OUT" and transaction.get("reason") == "Sale" and not is_cancelled)
+
+            if is_sale:
+                display_transaction["price"] = transaction.get("price")
+                display_transaction["sales_value"] = transaction.get("sales_value", 0)
+
+        display_transaction["payment_method"] = current_payment
+
+        filtered_transactions.append(display_transaction)
+
+    # Preserve chronological display order; the template need not reverse it.
+    filtered_transactions.sort(key=lambda item: str(item.get("timestamp", "")), reverse=True,)
+
+    # Filter choices come from the actual transaction history.
+    reasons = sorted({str(transaction.get("reason", "Unspecified")) for transaction in all_transactions})
+
+    payment_methods = ["Cash", "Bank Transfer", "Cheque", "Unspecified"]
+
+    return render_template("transactions.html", username=session["username"], role=session["role"], transactions=filtered_transactions, search_query=request.args.get("search", ""), selected_type=transaction_type, selected_reason=reason_filter, selected_payment_method=payment_filter, selected_period=period, start_date=start_date, end_date=end_date, selected_status=status_filter, reasons=reasons, payment_methods=payment_methods, is_admin=is_admin_user(),)
+
+@app.route("/transactions/cancel-sale/<transaction_id>", methods=["POST"])
+@admin_required
+def cancel_sale_route(transaction_id):
+    """Allow administrators to cancel a recorded sale."""
+
+    reason = request.form.get("cancellation_reason", "").strip()
+
+    try:
+        inventory_service = InventoryService()
+        inventory_service.load_inventory(INVENTORY_FILE)
+
+        inventory_service.cancel_sale(transaction_id=transaction_id, reason=reason, file_path=INVENTORY_FILE,)
+
+        flash("Sale cancelled successfully. The stock has been restored.", "success",)
+
+    except (ValueError, TypeError) as error:
+        flash(str(error), "error")
+
+    except OSError:
+        app.logger.exception("Failed to save the sale cancellation.")
+        flash("The sale cancellation could not be saved. Please check the inventory.", "error",)
+
+    return redirect(url_for("transactions"))
 
 @app.route("/reports")
 @login_required
 def reports():
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
     report_data = inventory_service.get_dashboard_data()
     # Hide financial information from staff only.
     if not is_admin_user():
@@ -568,11 +862,11 @@ def backups():
     inventory_service = InventoryService()
 
     if request.method == "POST":
-        inventory_service.create_backup(DEFAULT_INVENTORY_FILE, DEFAULT_BACKUP_DIRECTORY)
+        inventory_service.create_backup(INVENTORY_FILE, BACKUP_DIRECTORY)
 
         return redirect(url_for("backups"))
 
-    backups = inventory_service.list_backups(DEFAULT_BACKUP_DIRECTORY)
+    backups = inventory_service.list_backups(BACKUP_DIRECTORY)
 
     return render_template("backups.html", username=session["username"], role=session["role"], backups=backups)
 
@@ -586,7 +880,7 @@ def view_backup():
     if not backup_file:
         return "No backup file selected."
 
-    backup_path = os.path.join(DEFAULT_BACKUP_DIRECTORY, os.path.basename(backup_file))
+    backup_path = os.path.join(BACKUP_DIRECTORY, os.path.basename(backup_file))
     
     if not os.path.exists(backup_path):
         return "Backup file not found."
@@ -619,7 +913,7 @@ def restore_backup():
 
     # Resolve the selected filename inside the backup directory.
     backup_filename = os.path.basename(backup_file)
-    backup_path = os.path.join(DEFAULT_BACKUP_DIRECTORY, backup_filename,)
+    backup_path = os.path.join(BACKUP_DIRECTORY, backup_filename,)
 
     # Never attempt to restore a file that does not exist.
     if not os.path.isfile(backup_path):
@@ -630,7 +924,7 @@ def restore_backup():
 
     try:
         # Preserve the existing inventory in a new backup before restoring.
-        inventory_service.safe_restore_backup(backup_path, DEFAULT_INVENTORY_FILE, DEFAULT_BACKUP_DIRECTORY,)
+        inventory_service.safe_restore_backup(backup_path, INVENTORY_FILE, BACKUP_DIRECTORY,)
     except (OSError, ValueError) as error:
         app.logger.exception("Failed to restore inventory backup")
         flash(f"Backup restoration failed: {error}", "error")
@@ -648,7 +942,7 @@ def logout():
 @login_required
 def view_records():
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     transactions = inventory_service.get_transactions()
 
@@ -681,7 +975,7 @@ def view_records():
 @admin_required
 def financial_review():
     inventory_service = InventoryService()
-    inventory_service.load_inventory(DEFAULT_INVENTORY_FILE)
+    inventory_service.load_inventory(INVENTORY_FILE)
 
     transactions = inventory_service.get_transactions()
 

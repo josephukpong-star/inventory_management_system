@@ -1,208 +1,576 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Inventory Management System - Update Product</title>
+    <title>Inventory Management System - Edit Product</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .product-form-container {
+            display: block;
+            width: 100%;
+            max-width: none;
+            margin: 0;
+            padding: 20px 30px;
+            box-sizing: border-box;
+        }
+
+        .product-form-card {
+            width: 100%;
+            padding: 32px;
+            box-sizing: border-box;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 3px 14px rgba(0, 0, 0, 0.06);
+        }
+
+        .product-form-card > h2 {
+            margin: 0 0 10px;
+        }
+
+        .form-description,
+        .form-section-description {
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .form-description {
+            margin-bottom: 28px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section h2 {
+            margin-bottom: 12px;
+            font-size: 19px;
+        }
+
+        .form-section-description {
+            margin-bottom: 22px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 22px 20px;
+        }
+
+        .product-form-card .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            min-width: 0;
+        }
+
+        .product-form-card label {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+
+        .product-form-card input {
+            width: 100%;
+            min-width: 0;
+            min-height: 46px;
+            padding: 11px 12px;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 14px;
+        }
+
+        .product-form-card input:focus {
+            outline: 2px solid #93c5fd;
+            border-color: #2563eb;
+        }
+
+        .product-form-card input[readonly] {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .product-form-card small {
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .unit-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+            gap: 16px;
+            align-items: end;
+            padding: 18px 0;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .unit-row .form-group {
+            margin: 0;
+        }
+
+        .remove-unit-button,
+        .add-unit-button {
+            min-height: 42px;
+            padding: 10px 16px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .remove-unit-button {
+            border: 1px solid #fecaca;
+            background: #fff;
+            color: #b91c1c;
+        }
+
+        .add-unit-button {
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        .form-error {
+            margin-bottom: 24px;
+            padding: 14px 16px;
+            border-radius: 7px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            line-height: 1.5;
+        }
+
+        .form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .form-actions button,
+        .form-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 12px 26px;
+            border-radius: 7px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .save-product-button {
+            border: none;
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .save-product-button:hover {
+            background: #1d4ed8;
+        }
+
+        .cancel-product-button {
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #334155;
+        }
+
+        @media (max-width: 1000px) {
+            .form-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 700px) {
+            .product-form-card {
+                padding: 20px;
+            }
+
+            .form-grid,
+            .unit-row {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .remove-unit-button {
+                width: fit-content;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .product-form-container {
+                padding: 12px;
+            }
+
+            .product-form-card {
+                padding: 16px;
+            }
+
+            .form-actions button,
+            .form-actions a {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
     <aside class="sidebar">
-
         <div class="sidebar-brand">
             <h2>IMS</h2>
             <p>Inventory System</p>
         </div>
 
         <nav class="sidebar-nav">
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/products" class="nav-link active">Products</a>
+            <a href="/stock" class="nav-link">Stock</a>
+            <a href="/sales" class="nav-link">Sales</a>
+            <a href="/transactions" class="nav-link">Transactions</a>
+            <a href="/view-records" class="nav-link">View Records</a>
+            <a href="/reports" class="nav-link">Reports</a>
+            <a href="/financial-review" class="nav-link">Financial Review</a>
+            <a href="/backups" class="nav-link">Backups</a>
 
-            <a href="/dashboard" class="nav-link">
-                Dashboard
-            </a>
-
-            <a href="/products" class="nav-link active">
-                Products
-            </a>
-
-            <a href="/stock" class="nav-link">
-                Stock
-            </a>
-
-            <a href="/sales" class="nav-link">
-                Sales
-            </a>
-
-            <a href="/transactions" class="nav-link">
-                Transactions
-            </a>
-
-            <a href="/view-records" class="nav-link">
-                View Records
-            </a>
-
-            <a href="/reports" class="nav-link">
-                Reports
-            </a>
-
-            <a href="/financial-review" class="nav-link">
-                Financial Review
-            </a>
-
-            <a href="/backups" class="nav-link">
-                Backups
-            </a>
-
-             {% if is_admin %}
-            <a href="/staff" class="nav-link">
-                Staff Management
-            </a>
+            {% if is_admin %}
+            <a href="/staff" class="nav-link">Staff Management</a>
             {% endif %}
-
         </nav>
 
         <div class="sidebar-bottom">
-            <a href="/logout" class="logout-link">
-                Logout
-            </a>
+            <a href="/logout" class="logout-link">Logout</a>
         </div>
-
     </aside>
-
 
     <main class="main-content">
 
         <header class="top-header">
-
             <div>
-                <h1>Update Product</h1>
-                <p>Update an existing inventory product.</p>
+                <h1>Edit Product</h1>
+                <p>Update product information without changing its stock quantity or creation date.</p>
             </div>
 
             <div class="user-info">
                 <strong>{{ username }}</strong>
                 <span>{{ role }}</span>
             </div>
-
         </header>
 
-
         <section class="welcome-section">
-
-            <h2>Edit Product</h2>
-
-            <p>
-                Enter the Product ID and the information you want to update.
-            </p>
-
+            <h2>Product Information</h2>
+            <p>Review the existing values and change only the details you need to update.</p>
         </section>
 
+        <section class="dashboard-section product-form-container">
+            <div class="product-form-card">
 
-        <section class="dashboard-section">
-
-            <div class="section-card">
-
-                <h2>Product Information</h2>
-
-                <form method="POST" action="/products/update">
-
-                    <div class="form-group">
-
-                        <label for="product_id">
-                            Product ID
-                        </label>
-
-                        <input
-                            type="number"
-                            id="product_id"
-                            name="product_id"
-                            min="1"
-                            value="{{ product_id or '' }}"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="name">
-                            New Product Name
-                        </label>
-
-                        <input
-                            type="text"
-                            id="name"
-                            name="name"
-                            placeholder="Leave blank to keep current name"
-                        >
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="price">
-                            New Price
-                        </label>
-
-                        <input
-                            type="number"
-                            id="price"
-                            name="price"
-                            min="0"
-                            step="0.01"
-                            placeholder="Leave blank to keep current price"
-                        >
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="category">
-                            New Category
-                        </label>
-
-                        <input
-                            type="text"
-                            id="category"
-                            name="category"
-                            placeholder="Leave blank to keep current category"
-                        >
-
-                    </div>
-
-
+                {% if not product %}
+                    <h2>Select a Product</h2>
+                    <p class="form-description">
+                        Open the Products page and select a product to edit.
+                    </p>
                     <div class="form-actions">
+                        <a href="{{ url_for('products') }}" class="cancel-product-button">
+                            Return to Products
+                        </a>
+                    </div>
+                {% else %}
+
+                <h2>{{ product.name }}</h2>
+                <p class="form-description">
+                    Product ID: {{ product.product_id }}
+                </p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="form-error" role="alert">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('update_product') }}">
+
+                    <input
+                        type="hidden"
+                        name="product_id"
+                        value="{{ product.product_id }}"
+                    >
+
+                    <div class="form-section">
+                        <h2>Basic Details</h2>
+
+                        <div class="form-grid">
+
+                            <div class="form-group">
+                                <label for="name">Product Name</label>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    value="{{ product.name }}"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="category">Category</label>
+                                <input
+                                    type="text"
+                                    id="category"
+                                    name="category"
+                                    value="{{ product.category }}"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="base_unit">Base Unit</label>
+                                <input
+                                    type="text"
+                                    id="base_unit"
+                                    name="base_unit"
+                                    value="{{ product.base_unit }}"
+                                    required
+                                >
+                                <small>The smallest unit used to track stock.</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="price">Cost Price per Base Unit (₦)</label>
+                                <input
+                                    type="number"
+                                    id="price"
+                                    name="price"
+                                    min="0"
+                                    step="0.01"
+                                    value="{{ product.price }}"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="selling_price">Selling Price per Base Unit (₦)</label>
+                                <input
+                                    type="number"
+                                    id="selling_price"
+                                    name="selling_price"
+                                    min="0"
+                                    step="0.01"
+                                    value="{{ product.selling_price }}"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="quantity">Current Stock (Base Units)</label>
+                                <input
+                                    type="number"
+                                    id="quantity"
+                                    value="{{ product.quantity }}"
+                                    readonly
+                                >
+                                <small>Stock quantity is managed through Stock and Sales.</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="date_added">Date Added</label>
+                                <input
+                                    type="text"
+                                    id="date_added"
+                                    value="{{ product.date_added or 'Not recorded' }}"
+                                    readonly
+                                >
+                                <small>The original date is preserved when editing.</small>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2>Purchase Units</h2>
+                        <p class="form-section-description">
+                            Each conversion factor represents the number of base units
+                            contained in one purchase package.
+                        </p>
+
+                        <div id="purchase-units-container">
+
+                            {% for unit in product.purchase_units %}
+                            <div class="unit-row">
+                                <div class="form-group">
+                                    <label>Purchase Unit Name</label>
+                                    <input
+                                        type="text"
+                                        name="purchase_unit_name"
+                                        value="{{ unit.name }}"
+                                        placeholder="e.g. crate"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Conversion Factor</label>
+                                    <input
+                                        type="number"
+                                        name="purchase_unit_factor"
+                                        min="0.000001"
+                                        step="any"
+                                        value="{{ unit.base_quantity }}"
+                                        placeholder="e.g. 30"
+                                    >
+                                </div>
+
+                                <button type="button" class="remove-unit-button">
+                                    Remove
+                                </button>
+                            </div>
+                            {% endfor %}
+
+                        </div>
 
                         <button
-                            type="submit"
-                            class="btn-primary"
+                            type="button"
+                            class="add-unit-button"
+                            data-container="purchase-units-container"
                         >
-                            Update Product
+                            + Add Purchase Unit
+                        </button>
+                    </div>
+
+                    <div class="form-section">
+                        <h2>Selling Units</h2>
+                        <p class="form-section-description">
+                            Manage the units customers can buy, such as a piece,
+                            half-dozen, pack, or crate.
+                        </p>
+
+                        <div id="selling-units-container">
+
+                            {% for unit in product.selling_units %}
+                            <div class="unit-row">
+                                <div class="form-group">
+                                    <label>Selling Unit Name</label>
+                                    <input
+                                        type="text"
+                                        name="selling_unit_name"
+                                        value="{{ unit.name }}"
+                                        placeholder="e.g. half-dozen"
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Conversion Factor</label>
+                                    <input
+                                        type="number"
+                                        name="selling_unit_factor"
+                                        min="0.000001"
+                                        step="any"
+                                        value="{{ unit.base_quantity }}"
+                                        placeholder="e.g. 6"
+                                    >
+                                </div>
+
+                                <button type="button" class="remove-unit-button">
+                                    Remove
+                                </button>
+                            </div>
+                            {% endfor %}
+
+                        </div>
+
+                        <button
+                            type="button"
+                            class="add-unit-button"
+                            data-container="selling-units-container"
+                        >
+                            + Add Selling Unit
+                        </button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="save-product-button">
+                            Save Changes
                         </button>
 
                         <a
-                            href="/products"
-                            class="btn-secondary"
+                            href="{{ url_for('products') }}"
+                            class="cancel-product-button"
                         >
                             Cancel
                         </a>
-
                     </div>
 
                 </form>
+                {% endif %}
 
             </div>
-
         </section>
-
     </main>
+
+    <script>
+        document.querySelectorAll(".add-unit-button").forEach(function (button) {
+            button.addEventListener("click", function () {
+                const container = document.getElementById(
+                    button.dataset.container
+                );
+
+                const isPurchase = container.id === "purchase-units-container";
+                const unitType = isPurchase ? "Purchase" : "Selling";
+                const nameField = isPurchase
+                    ? "purchase_unit_name"
+                    : "selling_unit_name";
+                const factorField = isPurchase
+                    ? "purchase_unit_factor"
+                    : "selling_unit_factor";
+
+                const row = document.createElement("div");
+                row.className = "unit-row";
+
+                row.innerHTML = `
+                    <div class="form-group">
+                        <label>${unitType} Unit Name</label>
+                        <input
+                            type="text"
+                            name="${nameField}"
+                            placeholder="e.g. pack"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label>Conversion Factor</label>
+                        <input
+                            type="number"
+                            name="${factorField}"
+                            min="0.000001"
+                            step="any"
+                            placeholder="e.g. 12"
+                        >
+                    </div>
+
+                    <button type="button" class="remove-unit-button">
+                        Remove
+                    </button>
+                `;
+
+                container.appendChild(row);
+            });
+        });
+
+        document.addEventListener("click", function (event) {
+            if (event.target.classList.contains("remove-unit-button")) {
+                event.target.closest(".unit-row").remove();
+            }
+        });
+    </script>
 
 </body>
 </html>

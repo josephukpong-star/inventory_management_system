@@ -1,6 +1,21 @@
 import math
+from datetime import datetime
+_DATE_NOT_PROVIDED = object()
+
 class Product:
-    def __init__(self, product_id, name, price, quantity, category="Uncategorized", base_unit="unit", purchase_units=None, selling_units=None, selling_price=None,):
+    def __init__(
+        self,
+        product_id,
+        name,
+        price,
+        quantity,
+        category="Uncategorized",
+        base_unit="unit",
+        purchase_units=None,
+        selling_units=None,
+        selling_price=None,
+        date_added=_DATE_NOT_PROVIDED,
+    ):
         if isinstance(product_id, bool) or not isinstance(product_id, int):
             raise ValueError("Product ID must be an integer")
         if product_id <= 0:
@@ -19,7 +34,9 @@ class Product:
         if selling_price is None:
             selling_price = price
 
-        if isinstance(selling_price, bool) or not isinstance(selling_price, (int, float)):
+        if isinstance(selling_price, bool) or not isinstance(
+            selling_price, (int, float)
+        ):
             raise ValueError("Selling price must be a number")
         if not math.isfinite(selling_price):
             raise ValueError("Selling price must be finite")
@@ -50,6 +67,13 @@ class Product:
         self.purchase_units = self._normalize_units(purchase_units)
         self.selling_units = self._normalize_units(selling_units)
 
+        # Record the creation date for new products.
+        # Preserve the original date when loading an existing product.
+        if date_added is _DATE_NOT_PROVIDED:
+            self.date_added = datetime.now().date().isoformat()
+        else:
+            self.date_added = date_added
+
     @staticmethod
     def _validate_units(units, unit_type):
         if units is None:
@@ -57,44 +81,76 @@ class Product:
 
         if not isinstance(units, list):
             raise ValueError(f"{unit_type} units must be a list")
+
         seen_names = set()
 
         for unit in units:
             if not isinstance(unit, dict):
-                raise ValueError(f"Each {unit_type.lower()} unit must be a dictionary")
+                raise ValueError(
+                    f"Each {unit_type.lower()} unit must be a dictionary"
+                )
+
             name = unit.get("name")
             factor = unit.get("base_quantity")
 
             if not isinstance(name, str) or not name.strip():
                 raise ValueError(f"{unit_type} unit name cannot be empty")
+
             normalized_name = name.strip().lower()
 
             if normalized_name in seen_names:
                 raise ValueError(f"Duplicate {unit_type.lower()} unit name")
+
             seen_names.add(normalized_name)
 
             if isinstance(factor, bool) or not isinstance(factor, (int, float)):
-                raise ValueError(f"{unit_type} unit conversion factor must be a number")
+                raise ValueError(
+                    f"{unit_type} unit conversion factor must be a number"
+                )
+
             if not math.isfinite(factor):
-                raise ValueError(f"{unit_type} unit conversion factor must be finite")
+                raise ValueError(
+                    f"{unit_type} unit conversion factor must be finite"
+                )
+
             if factor <= 0:
-                raise ValueError(f"{unit_type} unit conversion factor must be greater than zero")
+                raise ValueError(
+                    f"{unit_type} unit conversion factor must be greater than zero"
+                )
 
     @staticmethod
     def _normalize_units(units):
         if units is None:
             return []
-        return [{"name": unit["name"].strip().lower(), "base_quantity": unit["base_quantity"],} for unit in units]
+
+        return [
+            {
+                "name": unit["name"].strip().lower(),
+                "base_quantity": unit["base_quantity"],
+            }
+            for unit in units
+        ]
 
     def to_dict(self):
-        data = {"product_id": self.product_id, "name": self.name, "price": self.price, "quantity": self.quantity, "category": self.category,}
+        data = {
+            "product_id": self.product_id,
+            "name": self.name,
+            "price": self.price,
+            "quantity": self.quantity,
+            "category": self.category,
+            "date_added": self.date_added,
+        }
 
         # Save selling_price only when it differs from the existing cost price.
         if self.selling_price != self.price:
             data["selling_price"] = self.selling_price
 
         # Preserve the existing JSON structure for legacy products.
-        if (self.base_unit != "unit" or self.purchase_units or self.selling_units):
+        if (
+            self.base_unit != "unit"
+            or self.purchase_units
+            or self.selling_units
+        ):
             data["base_unit"] = self.base_unit
             data["purchase_units"] = self.purchase_units
             data["selling_units"] = self.selling_units

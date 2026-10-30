@@ -98,22 +98,22 @@
         <section class="dashboard-cards">
             <div class="dashboard-card">
                 <h3>Sales Revenue</h3>
-                <p class="card-value">â‚¦{{ "{:,.2f}".format(revenue) }}</p>
+                <p class="card-value">₦{{ "{:,.2f}".format(revenue) }}</p>
             </div>
 
             <div class="dashboard-card">
                 <h3>Cost of Goods Sold</h3>
-                <p class="card-value">â‚¦{{ "{:,.2f}".format(cost_of_goods_sold) }}</p>
+                <p class="card-value">₦{{ "{:,.2f}".format(cost_of_goods_sold) }}</p>
             </div>
 
             <div class="dashboard-card {% if gross_profit < 0 %}status-danger{% endif %}">
                 <h3>Gross Profit / Loss</h3>
-                <p class="card-value">â‚¦{{ "{:,.2f}".format(gross_profit) }}</p>
+                <p class="card-value">₦{{ "{:,.2f}".format(gross_profit) }}</p>
             </div>
 
             <div class="dashboard-card">
                 <h3>Stock-In Value</h3>
-                <p class="card-value">â‚¦{{ "{:,.2f}".format(stock_in_value) }}</p>
+                <p class="card-value">₦{{ "{:,.2f}".format(stock_in_value) }}</p>
             </div>
 
             <div class="dashboard-card">
@@ -123,22 +123,22 @@
 
             <div class="dashboard-card">
                 <h3>Cash Received</h3>
-                <p class="card-value">â‚¦{{ "{:,.2f}".format(cash_received) }}</p>
+                <p class="card-value">₦{{ "{:,.2f}".format(cash_received) }}</p>
             </div>
 
             <div class="dashboard-card">
                 <h3>Bank Transfer Received</h3>
-                <p class="card-value">â‚¦{{ "{:,.2f}".format(bank_transfer_received) }}</p>
+                <p class="card-value">₦{{ "{:,.2f}".format(bank_transfer_received) }}</p>
             </div>
 
             <div class="dashboard-card">
                 <h3>Cheque Payments</h3>
-                <p class="card-value">â‚¦{{ "{:,.2f}".format(cheque_received) }}</p>
+                <p class="card-value">₦{{ "{:,.2f}".format(cheque_received) }}</p>
             </div>
 
             <div class="dashboard-card">
                 <h3>Unspecified Payment</h3>
-                <p class="card-value">â‚¦{{ "{:,.2f}".format(unspecified_payment_total) }}</p>
+                <p class="card-value">₦{{ "{:,.2f}".format(unspecified_payment_total) }}</p>
             </div>
 
         </section>
@@ -165,9 +165,9 @@
                                     <tr>
                                         <td>{{ item["product_name"] }}</td>
                                         <td>{{ item["quantity"] }}</td>
-                                        <td>â‚¦{{ "{:,.2f}".format(item["revenue"]) }}</td>
-                                        <td>â‚¦{{ "{:,.2f}".format(item["cost"]) }}</td>
-                                        <td>â‚¦{{ "{:,.2f}".format(item["gross_profit"]) }}</td>
+                                        <td>₦{{ "{:,.2f}".format(item["revenue"]) }}</td>
+                                        <td>₦{{ "{:,.2f}".format(item["cost"]) }}</td>
+                                        <td>₦{{ "{:,.2f}".format(item["gross_profit"]) }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

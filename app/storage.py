@@ -11,7 +11,19 @@ def _copy_json_file(source_file_path, destination_file_path):
     with open(destination_file_path, "w") as destination_file:
         json.dump(data, destination_file, indent=4)
 def _product_from_dict(item):
-    return Product(item["product_id"], item["name"], item["price"], item["quantity"], item.get("category", "Uncategorized"), base_unit=item.get("base_unit", "unit"), purchase_units=item.get("purchase_units"), selling_units=item.get("selling_units"), selling_price=item.get("selling_price"),)
+    return Product(
+        item["product_id"],
+        item["name"],
+        item["price"],
+        item["quantity"],
+        item.get("category", "Uncategorized"),
+        base_unit=item.get("base_unit", "unit"),
+        purchase_units=item.get("purchase_units"),
+        selling_units=item.get("selling_units"),
+        selling_price=item.get("selling_price"),
+        date_added=item.get("date_added"),
+    )
+
 def save_products(products, file_path):
     data = [product.to_dict() for product in products]
     with open(file_path, "w") as file:

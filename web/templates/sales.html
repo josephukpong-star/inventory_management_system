@@ -6,7 +6,8 @@
 
     <title>Inventory Management System - Sales</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 
 <body>
@@ -27,7 +28,7 @@
             <a href="/financial-review" class="nav-link">Financial Review</a>
             <a href="/backups" class="nav-link">Backups</a>
 
-            {% if is_admin %}
+            {% if role|lower == "admin" %}
             <a href="/staff" class="nav-link">Staff Management</a>
             {% endif %}
         </nav>
@@ -66,7 +67,8 @@
             <h2>Record a Sale</h2>
             <p>
                 Add one or more products to a customer's sale.
-                Review the quantities, selling prices, and total before submitting.
+                Select the selling unit, enter the quantity and selling
+                price, and review the totals before recording the sale.
             </p>
         </section>
 
@@ -83,7 +85,10 @@
                     <div id="sale_items">
                         <div class="sale-item"
                              data-line="0"
-                             style="border: 1px solid #ddd; padding: 16px; margin-bottom: 16px; border-radius: 8px;">
+                             style="border: 1px solid #ddd;
+                                    padding: 16px;
+                                    margin-bottom: 16px;
+                                    border-radius: 8px;">
 
                             <h3 class="sale-item-heading">Product 1</h3>
 
@@ -101,11 +106,31 @@
                                         value="{{ product.product_id }}"
                                         data-stock="{{ product.quantity }}"
                                         data-cost="{{ product.price }}"
+                                        data-selling-price="{{ product.selling_price }}"
+                                        data-base-unit="{{ product.base_unit }}"
+                                        data-selling-units='{{ product.selling_units | tojson | forceescape }}'
                                         {% if product.quantity <= 0 %}disabled{% endif %}>
                                         {{ product.name }} —
-                                        {{ product.quantity }} units available
+                                        {{ product.quantity }}
+                                        {{ product.base_unit }} available
                                     </option>
                                     {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="selling_unit_0">
+                                    Selling Unit
+                                </label>
+
+                                <select id="selling_unit_0"
+                                        name="selling_unit"
+                                        class="sale-unit"
+                                        required
+                                        disabled>
+                                    <option value="">
+                                        Select a product first
+                                    </option>
                                 </select>
                             </div>
 
@@ -123,7 +148,9 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="price_0">Selling Price Per Unit (₦)</label>
+                                <label for="price_0">
+                                    Selling Price Per Selected Unit (₦)
+                                </label>
 
                                 <input
                                     type="number"
@@ -132,12 +159,14 @@
                                     class="sale-price"
                                     min="0"
                                     step="0.01"
-                                    placeholder="Enter selling price"
+                                    placeholder="Select a product and unit"
                                     required>
                             </div>
 
                             <div class="form-group">
-                                <label for="line_total_0">Line Total (₦)</label>
+                                <label for="line_total_0">
+                                    Line Total (₦)
+                                </label>
 
                                 <input
                                     type="text"
@@ -154,7 +183,8 @@
                             <p class="price-warning" aria-live="polite"></p>
 
                             <p class="profit-preview" aria-live="polite">
-                                Enter a selling price and quantity to estimate profit or loss.
+                                Select a product, selling unit, quantity,
+                                and price to estimate profit or loss.
                             </p>
 
                             <button type="button"
@@ -174,7 +204,9 @@
                     <hr style="margin: 24px 0;">
 
                     <div class="form-group">
-                        <label for="sale_total">Total Sale Amount (₦)</label>
+                        <label for="sale_total">
+                            Total Sale Amount (₦)
+                        </label>
 
                         <input
                             type="text"
@@ -198,10 +230,9 @@
                     <div class="form-group">
                         <label for="payment_method">Payment Method</label>
 
-                        <select
-                            id="payment_method"
-                            name="payment_method"
-                            required>
+                        <select id="payment_method"
+                                name="payment_method"
+                                required>
                             <option value="Cash">Cash</option>
                             <option value="Bank Transfer">Bank Transfer</option>
                             <option value="Cheque">Cheque</option>
@@ -211,17 +242,17 @@
                     <p id="sale_validation_message"
                        aria-live="polite"></p>
 
-                    <button
-                        type="submit"
-                        id="record_sale_button"
-                        class="backup-button">
+                    <button type="submit"
+                            id="record_sale_button"
+                            class="backup-button">
                         Record Sale
                     </button>
                 </form>
 
                 {% else %}
                 <p>
-                    No products are available. Add a product before recording a sale.
+                    No products are available. Add a product before
+                    recording a sale.
                 </p>
 
                 <a href="/products" class="backup-button">
@@ -234,11 +265,16 @@
 
     <script>
         const saleItems = document.getElementById("sale_items");
-        const addSaleItemButton = document.getElementById("add_sale_item");
-        const saleForm = document.getElementById("multi_sale_form");
-        const totalInput = document.getElementById("sale_total");
-        const totalProfitInput = document.getElementById("total_profit_preview");
-        const validationMessage = document.getElementById("sale_validation_message");
+        const addSaleItemButton =
+            document.getElementById("add_sale_item");
+        const saleForm =
+            document.getElementById("multi_sale_form");
+        const totalInput =
+            document.getElementById("sale_total");
+        const totalProfitInput =
+            document.getElementById("total_profit_preview");
+        const validationMessage =
+            document.getElementById("sale_validation_message");
 
         let nextLineId = 1;
 
@@ -250,12 +286,14 @@
         }
 
         function getSaleLines() {
-            return Array.from(saleItems.querySelectorAll(".sale-item"));
+            return Array.from(
+                saleItems.querySelectorAll(".sale-item")
+            );
         }
 
         function updateLineHeading(line, index) {
-            const heading = line.querySelector(".sale-item-heading");
-            heading.textContent = "Product " + (index + 1);
+            line.querySelector(".sale-item-heading").textContent =
+                "Product " + (index + 1);
         }
 
         function updateRemoveButtons() {
@@ -264,27 +302,217 @@
             lines.forEach((line, index) => {
                 updateLineHeading(line, index);
 
-                const removeButton = line.querySelector(".remove-sale-item");
-                removeButton.hidden = lines.length === 1;
+                line.querySelector(".remove-sale-item").hidden =
+                    lines.length === 1;
             });
         }
 
-        function updateSalePreview(line) {
-            const productSelect = line.querySelector(".sale-product");
-            const quantityInput = line.querySelector(".sale-quantity");
-            const priceInput = line.querySelector(".sale-price");
-            const lineTotalInput = line.querySelector(".sale-line-total");
-            const stockMessage = line.querySelector(".stock-message");
-            const priceWarning = line.querySelector(".price-warning");
-            const profitPreview = line.querySelector(".profit-preview");
+        function getSelectedProductOption(line) {
+            const productSelect =
+                line.querySelector(".sale-product");
+
+            return productSelect.options[
+                productSelect.selectedIndex
+            ];
+        }
+
+        function getSelectedUnit(line) {
+            const unitSelect = line.querySelector(".sale-unit");
+
+            return unitSelect.options[
+                unitSelect.selectedIndex
+            ];
+        }
+
+        function getUnitFactor(line) {
+            const selectedUnit = getSelectedUnit(line);
+
+            if (!selectedUnit || !selectedUnit.value) {
+                return 0;
+            }
+
+            const factor = Number(selectedUnit.dataset.factor);
+
+            return Number.isFinite(factor) && factor > 0
+                ? factor
+                : 0;
+        }
+
+        function updateSellingUnitOptions(line) {
+            const productSelect =
+                line.querySelector(".sale-product");
+            const unitSelect =
+                line.querySelector(".sale-unit");
+            const priceInput =
+                line.querySelector(".sale-price");
 
             const selectedOption =
-                productSelect.options[productSelect.selectedIndex];
+                getSelectedProductOption(line);
 
-            const availableStock = selectedOption.dataset.stock;
+            unitSelect.innerHTML = "";
+            unitSelect.disabled = true;
+
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.textContent = productSelect.value
+                ? "Select selling unit"
+                : "Select a product first";
+
+            unitSelect.appendChild(placeholder);
+
+            if (!productSelect.value) {
+                priceInput.value = "";
+                return;
+            }
+
+            const baseUnit =
+                selectedOption.dataset.baseUnit || "unit";
+
+            let sellingUnits = [];
+
+            try {
+                sellingUnits = JSON.parse(
+                    selectedOption.dataset.sellingUnits || "[]"
+                );
+            } catch (error) {
+                console.error(
+                    "Could not read the product's selling units.",
+                    error
+                );
+            }
+
+            if (!Array.isArray(sellingUnits)) {
+                sellingUnits = [];
+            }
+
+            const units = [
+                {
+                    name: baseUnit,
+                    base_quantity: 1
+                },
+                ...sellingUnits
+            ];
+
+            const seenUnits = new Set();
+
+            units.forEach(unit => {
+                if (
+                    !unit ||
+                    typeof unit.name !== "string" ||
+                    !Number.isFinite(Number(unit.base_quantity)) ||
+                    Number(unit.base_quantity) <= 0
+                ) {
+                    return;
+                }
+
+                const unitName = unit.name.trim().toLowerCase();
+
+                if (!unitName || seenUnits.has(unitName)) {
+                    return;
+                }
+
+                seenUnits.add(unitName);
+
+                const option = document.createElement("option");
+
+                option.value = unitName;
+                option.dataset.factor = Number(unit.base_quantity);
+
+                option.textContent =
+                    unitName +
+                    " (" +
+                    unit.base_quantity +
+                    " " +
+                    baseUnit +
+                    ")";
+
+                unitSelect.appendChild(option);
+            });
+
+            unitSelect.disabled = false;
+
+            /*
+             * Do not select a unit automatically.
+             * The user must explicitly choose the selling unit.
+             */
+            priceInput.value = "";
+        }
+
+        function updatePriceForSelectedUnit(line) {
+            const selectedOption =
+                getSelectedProductOption(line);
+            const unitSelect =
+                line.querySelector(".sale-unit");
+            const priceInput =
+                line.querySelector(".sale-price");
+
+            if (!selectedOption.value || !unitSelect.value) {
+                priceInput.value = "";
+                return;
+            }
+
+            const baseSellingPrice =
+                Number(selectedOption.dataset.sellingPrice);
+            const factor = getUnitFactor(line);
+
+            if (
+                !Number.isFinite(baseSellingPrice) ||
+                baseSellingPrice < 0 ||
+                factor <= 0
+            ) {
+                priceInput.value = "";
+                return;
+            }
+
+            /*
+             * selling_price is the price per base unit.
+             * A package price is the base selling price multiplied
+             * by the package's conversion factor.
+             */
+            const packagePrice = baseSellingPrice * factor;
+
+            priceInput.value = packagePrice.toFixed(2);
+        }
+
+        function updateSalePreview(line) {
+            const productSelect =
+                line.querySelector(".sale-product");
+            const unitSelect =
+                line.querySelector(".sale-unit");
+            const quantityInput =
+                line.querySelector(".sale-quantity");
+            const priceInput =
+                line.querySelector(".sale-price");
+            const lineTotalInput =
+                line.querySelector(".sale-line-total");
+            const stockMessage =
+                line.querySelector(".stock-message");
+            const priceWarning =
+                line.querySelector(".price-warning");
+            const profitPreview =
+                line.querySelector(".profit-preview");
+
+            const selectedOption =
+                getSelectedProductOption(line);
+            const selectedUnit =
+                getSelectedUnit(line);
+
+            const selectedProduct =
+                productSelect.value !== "";
+            const selectedUnitValue =
+                Boolean(selectedUnit && selectedUnit.value);
+
+            const availableStock = selectedProduct
+                ? Number(selectedOption.dataset.stock)
+                : 0;
+
             const quantity = Number(quantityInput.value);
             const price = Number(priceInput.value);
-            const purchaseCost = Number(selectedOption.dataset.cost);
+            const purchaseCost = selectedProduct
+                ? Number(selectedOption.dataset.cost)
+                : NaN;
+
+            const factor = getUnitFactor(line);
 
             const validQuantity =
                 quantityInput.value !== "" &&
@@ -296,68 +524,138 @@
                 Number.isFinite(price) &&
                 price >= 0;
 
+            const validUnit =
+                selectedUnitValue && factor > 0;
+
             const validCost =
-                selectedOption.value !== "" &&
-                Number.isFinite(purchaseCost);
+                selectedProduct &&
+                Number.isFinite(purchaseCost) &&
+                purchaseCost >= 0;
 
-            let lineTotal = 0;
-            let estimatedProfit = 0;
+            const baseQuantity =
+                validQuantity && validUnit
+                    ? quantity * factor
+                    : 0;
 
-            if (validQuantity && validPrice) {
-                lineTotal = quantity * price;
-                lineTotalInput.value = formatNaira(lineTotal);
-            } else {
-                lineTotalInput.value = "₦0.00";
-            }
+            const maximumPackages =
+                validUnit && factor > 0
+                    ? Math.floor(availableStock / factor)
+                    : 0;
 
-            if (validQuantity && validPrice && validCost) {
-                estimatedProfit = (price - purchaseCost) * quantity;
+            const lineTotal =
+                validQuantity && validPrice && validUnit
+                    ? quantity * price
+                    : 0;
 
+            /*
+             * The purchase cost is per base unit.
+             * Convert it to the selected package's cost before
+             * estimating profit or loss.
+             */
+            const packageCost =
+                validCost && validUnit
+                    ? purchaseCost * factor
+                    : 0;
+
+            const estimatedProfit =
+                validQuantity && validPrice &&
+                validCost && validUnit
+                    ? lineTotal - packageCost * quantity
+                    : 0;
+
+            lineTotalInput.value = formatNaira(lineTotal);
+
+            if (
+                validQuantity &&
+                validPrice &&
+                validCost &&
+                validUnit
+            ) {
                 if (estimatedProfit > 0) {
                     profitPreview.textContent =
                         "Estimated gross profit: " +
                         formatNaira(estimatedProfit);
-                    profitPreview.className = "profit-preview profit";
+
+                    profitPreview.className =
+                        "profit-preview profit";
                 } else if (estimatedProfit < 0) {
                     profitPreview.textContent =
                         "Estimated gross loss: " +
                         formatNaira(Math.abs(estimatedProfit));
-                    profitPreview.className = "profit-preview loss";
+
+                    profitPreview.className =
+                        "profit-preview loss";
                 } else {
                     profitPreview.textContent =
                         "Estimated gross profit/loss: ₦0.00 (Break-even)";
-                    profitPreview.className = "profit-preview break-even";
+
+                    profitPreview.className =
+                        "profit-preview break-even";
                 }
             } else {
                 profitPreview.textContent =
-                    "Enter a selling price and quantity to estimate profit or loss.";
+                    "Select a product and selling unit, then enter " +
+                    "a valid quantity and selling price.";
+
                 profitPreview.className = "profit-preview";
             }
 
-            if (validPrice && validCost && price < purchaseCost) {
+            if (
+                validPrice &&
+                validCost &&
+                validUnit &&
+                price < packageCost
+            ) {
                 priceWarning.textContent =
-                    "Warning: Selling below purchase cost. Estimated loss: " +
-                    formatNaira(purchaseCost - price) + " per unit.";
+                    "Warning: Selling below purchase cost. " +
+                    "Estimated loss: " +
+                    formatNaira(packageCost - price) +
+                    " per selected unit.";
             } else {
                 priceWarning.textContent = "";
             }
 
-            if (!selectedOption.value) {
+            if (!selectedProduct) {
                 stockMessage.textContent =
                     "Select a product to see available stock.";
-                quantityInput.removeAttribute("max");
-            } else {
-                quantityInput.max = availableStock;
 
-                if (Number(availableStock) <= 0) {
-                    stockMessage.textContent = "This product is out of stock.";
-                } else if (validQuantity && quantity > Number(availableStock)) {
+                quantityInput.removeAttribute("max");
+            } else if (!validUnit) {
+                stockMessage.textContent =
+                    "Select a selling unit to check available quantity.";
+
+                quantityInput.removeAttribute("max");
+            } else if (availableStock <= 0) {
+                stockMessage.textContent =
+                    "This product is out of stock.";
+
+                quantityInput.max = "0";
+            } else {
+                quantityInput.max = String(maximumPackages);
+
+                if (
+                    validQuantity &&
+                    baseQuantity > availableStock
+                ) {
                     stockMessage.textContent =
-                        "Insufficient stock. Only " +
-                        availableStock + " units are available.";
+                        "Insufficient stock. You selected " +
+                        baseQuantity +
+                        " " +
+                        (selectedOption.dataset.baseUnit || "units") +
+                        ", but only " +
+                        availableStock +
+                        " are available.";
                 } else {
                     stockMessage.textContent =
-                        availableStock + " units available.";
+                        "Available stock: " +
+                        availableStock +
+                        " " +
+                        (selectedOption.dataset.baseUnit || "units") +
+                        ". Maximum sale: " +
+                        maximumPackages +
+                        " " +
+                        selectedUnit.value +
+                        "(s).";
                 }
             }
 
@@ -367,8 +665,12 @@
                 validQuantity,
                 validPrice,
                 validCost,
+                validUnit,
                 selectedProductId: productSelect.value,
-                availableStock: Number(availableStock)
+                selectedUnit: unitSelect.value,
+                availableStock,
+                factor,
+                baseQuantity
             };
         }
 
@@ -384,6 +686,7 @@
             });
 
             totalInput.value = formatNaira(total);
+
             totalProfitInput.value =
                 (totalProfit < 0 ? "-" : "") +
                 formatNaira(Math.abs(totalProfit));
@@ -398,20 +701,36 @@
 
             newLine.dataset.line = lineId;
 
-            const productSelect = newLine.querySelector(".sale-product");
+            const productSelect =
+                newLine.querySelector(".sale-product");
+
             productSelect.id = "product_id_" + lineId;
             productSelect.value = "";
 
-            const quantityInput = newLine.querySelector(".sale-quantity");
+            const unitSelect =
+                newLine.querySelector(".sale-unit");
+
+            unitSelect.id = "selling_unit_" + lineId;
+            unitSelect.innerHTML =
+                '<option value="">Select a product first</option>';
+            unitSelect.disabled = true;
+
+            const quantityInput =
+                newLine.querySelector(".sale-quantity");
+
             quantityInput.id = "quantity_" + lineId;
             quantityInput.value = "";
             quantityInput.removeAttribute("max");
 
-            const priceInput = newLine.querySelector(".sale-price");
+            const priceInput =
+                newLine.querySelector(".sale-price");
+
             priceInput.id = "price_" + lineId;
             priceInput.value = "";
 
-            const lineTotalInput = newLine.querySelector(".sale-line-total");
+            const lineTotalInput =
+                newLine.querySelector(".sale-line-total");
+
             lineTotalInput.id = "line_total_" + lineId;
             lineTotalInput.value = "₦0.00";
 
@@ -420,9 +739,13 @@
 
             newLine.querySelector(".price-warning").textContent = "";
 
-            const profitPreview = newLine.querySelector(".profit-preview");
+            const profitPreview =
+                newLine.querySelector(".profit-preview");
+
             profitPreview.textContent =
-                "Enter a selling price and quantity to estimate profit or loss.";
+                "Select a product and selling unit, then enter " +
+                "a valid quantity and selling price.";
+
             profitPreview.className = "profit-preview";
 
             saleItems.appendChild(newLine);
@@ -436,7 +759,8 @@
         addSaleItemButton.addEventListener("click", addSaleLine);
 
         saleItems.addEventListener("click", event => {
-            const removeButton = event.target.closest(".remove-sale-item");
+            const removeButton =
+                event.target.closest(".remove-sale-item");
 
             if (!removeButton) {
                 return;
@@ -446,6 +770,7 @@
 
             if (getSaleLines().length > 1) {
                 line.remove();
+
                 updateRemoveButtons();
                 updateAllSalePreviews();
             }
@@ -462,6 +787,16 @@
 
         saleItems.addEventListener("change", event => {
             if (event.target.matches(".sale-product")) {
+                const line = event.target.closest(".sale-item");
+
+                updateSellingUnitOptions(line);
+                updateAllSalePreviews();
+            }
+
+            if (event.target.matches(".sale-unit")) {
+                const line = event.target.closest(".sale-item");
+
+                updatePriceForSelectedUnit(line);
                 updateAllSalePreviews();
             }
         });
@@ -473,63 +808,67 @@
 
             lines.forEach((line, index) => {
                 const result = updateSalePreview(line);
-                const productSelect = line.querySelector(".sale-product");
-                const quantityInput = line.querySelector(".sale-quantity");
-                const priceInput = line.querySelector(".sale-price");
                 const lineNumber = index + 1;
 
                 if (!result.selectedProductId) {
-                    errors.push("Select a product for line " + lineNumber + ".");
-                } else if (selectedProducts.has(result.selectedProductId)) {
                     errors.push(
-                        "Product selections must be unique. " +
-                        "Line " + lineNumber + " duplicates another product. " +
-                        "Combine the quantities on one line."
+                        "Select a product for line " + lineNumber + "."
+                    );
+                } else if (
+                    selectedProducts.has(result.selectedProductId)
+                ) {
+                    errors.push(
+                        "Each product can appear only once per sale. " +
+                        "Line " + lineNumber +
+                        " duplicates another product. Combine quantities " +
+                        "on one line."
                     );
                 } else {
                     selectedProducts.add(result.selectedProductId);
                 }
 
-                if (
-                    !result.validQuantity ||
-                    result.validQuantity === false
-                ) {
+                if (!result.validUnit) {
                     errors.push(
-                        "Enter a whole quantity greater than zero on line " +
+                        "Select a valid selling unit on line " +
                         lineNumber + "."
+                    );
+                }
+
+                if (!result.validQuantity) {
+                    errors.push(
+                        "Enter a whole quantity greater than zero " +
+                        "on line " + lineNumber + "."
                     );
                 }
 
                 if (!result.validPrice) {
                     errors.push(
-                        "Enter a valid selling price on line " + lineNumber + "."
+                        "Enter a valid, non-negative selling price " +
+                        "on line " + lineNumber + "."
                     );
                 }
 
                 if (
                     result.selectedProductId &&
                     result.validQuantity &&
-                    result.availableStock < Number(quantityInput.value)
+                    result.validUnit &&
+                    result.baseQuantity > result.availableStock
                 ) {
                     errors.push(
-                        "Insufficient stock for line " + lineNumber + "."
-                    );
-                }
-
-                if (
-                    productSelect.value &&
-                    !Number.isFinite(Number(priceInput.value))
-                ) {
-                    errors.push(
-                        "Check the selling price on line " + lineNumber + "."
+                        "Insufficient stock for line " + lineNumber +
+                        ". The selected quantity exceeds available stock."
                     );
                 }
             });
 
             if (errors.length > 0) {
                 event.preventDefault();
-                validationMessage.textContent = errors.join(" ");
+
+                validationMessage.textContent =
+                    errors.join(" ");
+
                 validationMessage.style.color = "red";
+
                 return;
             }
 

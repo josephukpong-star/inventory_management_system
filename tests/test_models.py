@@ -1,5 +1,6 @@
 import pytest
 from app.models import Product
+from datetime import date
 def test_create_product():
     product = Product(1, "Laptop", 850000, 5)
     assert product.product_id == 1
@@ -8,8 +9,10 @@ def test_create_product():
     assert product.quantity == 5
 def test_product_to_dict():
     product = Product(1, "Laptop", 850000, 5)
+
     result = product.to_dict()
-    assert result == {"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Uncategorized"}
+
+    assert result == {"product_id": 1, "name": "Laptop", "price": 850000, "quantity": 5, "category": "Uncategorized", "date_added": date.today().isoformat(),}
 def test_negative_price_raises_error():
     with pytest.raises(ValueError, match="Price cannot be negative"):
         Product(1, "Laptop", -5000, 5)

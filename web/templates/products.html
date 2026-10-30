@@ -1,210 +1,420 @@
 ﻿<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Inventory Management System - Products</title>
+<title>Inventory Management System - Products</title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}">
+
 </head>
 
 <body>
 
-    <aside class="sidebar">
+<aside class="sidebar">
+    <div class="sidebar-brand">
+        <h2>IMS</h2>
+        <p>Inventory System</p>
+    </div>
 
-        <div class="sidebar-brand">
-            <h2>IMS</h2>
-            <p>Inventory System</p>
+    <nav class="sidebar-nav">
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        <a href="/products" class="nav-link active">Products</a>
+        <a href="/stock" class="nav-link">Stock</a>
+        <a href="/sales" class="nav-link">Sales</a>
+        <a href="/transactions" class="nav-link">Transactions</a>
+        <a href="/view-records" class="nav-link">View Records</a>
+        <a href="/reports" class="nav-link">Reports</a>
+        <a href="/financial-review" class="nav-link">Financial Review</a>
+        <a href="/backups" class="nav-link">Backups</a>
+
+        {% if is_admin %}
+        <a href="/staff" class="nav-link">Staff Management</a>
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-bottom">
+        <a href="/logout" class="logout-link">Logout</a>
+    </div>
+</aside>
+
+<main class="main-content">
+
+    <header class="top-header">
+        <div>
+            <h1>Products</h1>
+            <p>Manage and view inventory products</p>
         </div>
 
-        <nav class="sidebar-nav">
-            <a href="/dashboard" class="nav-link">Dashboard</a>
-            <a href="/products" class="nav-link active">Products</a>
-            <a href="/stock" class="nav-link">Stock</a>
-            <a href="/sales" class="nav-link">Sales</a>
-            <a href="/transactions" class="nav-link">Transactions</a>
-            <a href="/view-records" class="nav-link">View Records</a>
-            <a href="/reports" class="nav-link">Reports</a>
-            <a href="/financial-review" class="nav-link">Financial Review</a>
-            <a href="/backups" class="nav-link">Backups</a>
-             {% if is_admin %}
-            <a href="/staff" class="nav-link">
-                Staff Management
-            </a>
-            {% endif %}
-        </nav>
-
-        <div class="sidebar-bottom">
-            <a href="/logout" class="logout-link">Logout</a>
+        <div class="user-info">
+            <strong>{{ username }}</strong>
+            <span>{{ role }}</span>
         </div>
+    </header>
 
-    </aside>
-
-
-    <main class="main-content">
-
-        <header class="top-header">
-
-            <div>
-                <h1>Products</h1>
-                <p>Manage and view inventory products</p>
-            </div>
-
-            <div class="user-info">
-                <strong>{{ username }}</strong>
-                <span>{{ role }}</span>
-            </div>
-
-        </header>
-
-
-        <section class="welcome-section">
-
-            <h2>Product Inventory</h2>
-
-            <p>
-                View all products currently registered in the inventory.
-            </p>
-
-        </section>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
                 {% for category, message in messages %}
-                    <div class="flash-message flash-{{ category }}" role="alert">
-                        {{ message }}
-                    </div>
+                <div class="flash-message flash-{{ category }}"
+                     role="alert">
+                    {{ message }}
+                </div>
                 {% endfor %}
-            {% endif %}
-        {% endwith %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-        <section class="dashboard-section">
+    <section class="welcome-section">
+        <h2>Product Inventory</h2>
+        <p>
+            View, search, and filter all products currently
+            registered in the inventory.
+        </p>
+    </section>
 
-            <div class="section-card">
+    <section class="dashboard-section">
+        <div class="section-card">
 
-                <div class="products-toolbar">
-                    <div>
-                        <h2>Products</h2>
-                        <p>Manage your inventory products.</p>
-                    </div>
-
-                    <div class="products-actions">
-                        <input type="text" id="productSearch" placeholder="Search products...">
-
-                        <a href="/products/removed" class="btn-secondary">
-                            Removed Products
-                        </a>
-
-                        <a href="/products/deleted-history" class="btn-secondary">
-                            Deleted History
-                        </a>
-
-                        <a href="/products/add" class="btn-primary">
-                            + Add Product
-                        </a>
-                    </div>
-
+            <div class="products-toolbar">
+                <div>
+                    <h2>Products</h2>
+                    <p>Manage and filter your inventory products.</p>
                 </div>
 
-                {% if products %}
+                <div class="products-actions">
 
-                    <div class="table-container">
+                    <input
+                        type="text"
+                        id="productSearch"
+                        placeholder="Search by ID, name, or category..."
+                        aria-label="Search products">
 
-                        <table class="products-table" id="productsTable">
+                    <select id="categoryFilter"
+                            aria-label="Filter by category">
 
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Product</th>
-                                    <th>Category</th>
-                                    <th>Price</th>
-                                    <th>Quantity</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
+                        <option value="">All Categories</option>
 
-                            <tbody>
+                        {% for category in products
+                            | map(attribute='category')
+                            | select
+                            | unique
+                            | sort %}
 
-                                {% for product in products %}
+                        <option value="{{ category }}">
+                            {{ category }}
+                        </option>
 
-                                    <tr>
+                        {% endfor %}
+                    </select>
 
-                                        <td>{{ product.product_id }}</td>
+                    <select id="stockStatusFilter"
+                            aria-label="Filter by stock status">
 
-                                        <td>
-                                            <strong>{{ product.name }}</strong>
-                                        </td>
+                        <option value="">All Stock Statuses</option>
+                        <option value="in stock">In Stock</option>
+                        <option value="low stock">Low Stock</option>
+                        <option value="out of stock">Out of Stock</option>
+                    </select>
 
-                                        <td>{{ product.category }}</td>
+                    <label for="dateAddedFrom">Date Added From</label>
+                    <input
+                        type="date"
+                        id="dateAddedFrom"
+                        aria-label="Filter products added from this date">
 
-                                        <td>
-                                            â‚¦{{ "{:,.2f}".format(product.price) }}
-                                        </td>
+                    <label for="dateAddedTo">Date Added To</label>
+                    <input
+                        type="date"
+                        id="dateAddedTo"
+                        aria-label="Filter products added up to this date">
 
-                                        <td>{{ product.quantity }}</td>
+                    <button type="button"
+                            id="clearProductFilters"
+                            class="btn-secondary">
+                        Clear Filters
+                    </button>
 
-                                        <td>
-                                            {% if product.quantity == 0 %}
-                                                <span class="product-status status-danger">
-                                                    OUT OF STOCK
-                                                </span>
-                                            {% elif product.quantity <= 5 %}
-                                                <span class="product-status status-warning">
-                                                    LOW STOCK
-                                                </span>
-                                            {% else %}
-                                                <span class="product-status status-health">
-                                                    IN STOCK
-                                                </span>
-                                            {% endif %}
-                                        </td>
+                    <a href="/products/removed"
+                       class="btn-secondary">
+                        Removed Products
+                    </a>
 
+                    <a href="/products/deleted-history"
+                       class="btn-secondary">
+                        Deleted History
+                    </a>
 
-                                        <td>
-                                            <a href="/products/update?product_id={{ product.product_id }}" class="btn-secondary">
-                                                Update
-                                            </a>
+                    <a href="/products/add"
+                       class="btn-primary">
+                        + Add Product
+                    </a>
 
-                                            {% if is_admin %}
-                                            <form action="/products/remove" method="POST" style="display:inline;"
-                                                    onsubmit="return confirm('Are you sure you want to remove this product?');">
-                                                <input type="hidden" name="product_id" value="{{ product.product_id }}">
-                                                <button type="submit" class="btn-danger">
-                                                    Remove
-                                                </button>
-                                            </form>
-                                            {% endif %}
+                </div>
+            </div>
 
-                                        </td>
-                                    </tr>
+            {% if products %}
 
+            <div class="table-container">
 
-                                {% endfor %}
+                <table class="products-table" id="productsTable">
 
-                            </tbody>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Purchase Cost</th>
+                            <th>Selling Price</th>
+                            <th>Quantity</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
 
-                        </table>
+                    <tbody>
 
-                    </div>
+                        {% for product in products %}
 
-                {% else %}
+                        <tr
+                            data-category="{{ product.category | default('', true) | lower }}"
+                            data-status="{% if product.quantity == 0 %}out of stock{% elif product.quantity <= 5 %}low stock{% else %}in stock{% endif %}"
+                            data-date-added="{{ product.date_added or '' }}">
 
-                    <p>No products found.</p>
+                            <td>
+                                {{ product.product_id }}
+                            </td>
 
-                {% endif %}
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                            </td>
+
+                            <td>
+                                {{ product.category | default('Uncategorised', true) }}
+                            </td>
+
+                            <td>
+                                ₦{{ "{:,.2f}".format(product.price) }}
+                            </td>
+
+                            <td>
+                                ₦{{ "{:,.2f}".format(product.selling_price | default(product.price, true)) }}
+                            </td>
+
+                            <td>
+                                {{ product.quantity }}
+                            </td>
+
+                            <td>
+                                {% if product.quantity == 0 %}
+
+                                    <span class="product-status status-danger">
+                                        OUT OF STOCK
+                                    </span>
+
+                                {% elif product.quantity <= 5 %}
+
+                                    <span class="product-status status-warning">
+                                        LOW STOCK
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="product-status status-health">
+                                        IN STOCK
+                                    </span>
+
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <a href="/products/update?product_id={{ product.product_id }}"
+                                   class="btn-secondary">
+                                    Update
+                                </a>
+
+                                {% if is_admin %}
+
+                                <form
+                                    action="/products/remove"
+                                    method="POST"
+                                    style="display: inline;"
+                                    onsubmit="return confirm('Are you sure you want to remove this product?');">
+
+                                    <input
+                                        type="hidden"
+                                        name="product_id"
+                                        value="{{ product.product_id }}">
+
+                                    <button type="submit"
+                                            class="btn-danger">
+                                        Remove
+                                    </button>
+
+                                </form>
+
+                                {% endif %}
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+                <p id="productFilterMessage"
+                   role="status"
+                   aria-live="polite"
+                   style="margin-top: 12px;">
+                </p>
 
             </div>
 
-        </section>
+            {% else %}
 
-    </main>
+            <p>No products found.</p>
 
-    <script>
-        const searchInput = document.getElementById("productSearch");
-        const table = document.getElementById("productsTable");
-        searchInput.addEventListener("input", function () {const searchTerm = this.value.toLowerCase(); const rows = table.querySelectorAll("tbody tr"); rows.forEach(function (row) {const rowText = row.textContent.toLowerCase(); row.style.display = rowText.includes(searchTerm) ? "" : "none";});});
+            {% endif %}
+
+        </div>
+    </section>
+
+</main>
+
+<script>
+    const searchInput =
+        document.getElementById("productSearch");
+
+    const categoryFilter =
+        document.getElementById("categoryFilter");
+
+    const stockStatusFilter =
+        document.getElementById("stockStatusFilter");
+
+    const clearFiltersButton =
+        document.getElementById("clearProductFilters");
+
+    const table =
+        document.getElementById("productsTable");
+
+    const filterMessage =
+        document.getElementById("productFilterMessage");
+
+
+    function filterProducts() {
+    if (!table) {return;}
+
+    const searchTerm =
+        searchInput.value.trim().toLowerCase();
+
+    const selectedCategory =
+        categoryFilter.value.trim().toLowerCase();
+
+    const selectedStatus =
+        stockStatusFilter.value.trim().toLowerCase();
+
+    const dateAddedFrom =
+        document.getElementById("dateAddedFrom")?.value || "";
+
+    const dateAddedTo =
+        document.getElementById("dateAddedTo")?.value || "";
+
+    const rows =
+        table.querySelectorAll("tbody tr");
+
+    let visibleCount = 0;
+
+    rows.forEach(function (row) {
+        const rowText =
+            row.textContent.toLowerCase();
+
+        const rowCategory =
+            row.dataset.category || "";
+
+        const rowStatus =
+            row.dataset.status || "";
+
+        const dateAdded =
+            row.dataset.dateAdded || "";
+
+        const matchesSearch =
+            rowText.includes(searchTerm);
+
+        const matchesCategory =
+            !selectedCategory ||
+            rowCategory === selectedCategory;
+
+        const matchesStatus =
+            !selectedStatus ||
+            rowStatus === selectedStatus;
+
+        // Products without a recorded date cannot match a date range.
+        const matchesDateFrom =
+            !dateAddedFrom ||
+            (dateAdded && dateAdded >= dateAddedFrom);
+
+        const matchesDateTo =
+            !dateAddedTo ||
+            (dateAdded && dateAdded <= dateAddedTo);
+
+        const isVisible =
+            matchesSearch &&
+            matchesCategory &&
+            matchesStatus &&
+            matchesDateFrom &&
+            matchesDateTo;
+
+        row.style.display =
+            isVisible ? "" : "none";
+
+    if (isVisible) {visibleCount++;}});
+
+    filterMessage.textContent =
+        visibleCount +
+        (visibleCount === 1 ? " product displayed." : " products displayed.");
+
+    if (visibleCount === 0) {filterMessage.textContent = "No products match your search and filters.";}}
+
+    // Existing search filter
+    if (searchInput) {searchInput.addEventListener("input",filterProducts);}
+
+    // Existing category filter
+    if (categoryFilter) {categoryFilter.addEventListener("change",filterProducts);}
+
+    // Existing stock-status filter
+    if (stockStatusFilter) {stockStatusFilter.addEventListener("change",filterProducts);}
+
+    // New date filters
+    const dateAddedFromInput =
+    document.getElementById("dateAddedFrom");
+
+    const dateAddedToInput =
+    document.getElementById("dateAddedTo");
+
+    if (dateAddedFromInput) {dateAddedFromInput.addEventListener("change",filterProducts);}
+
+    if (dateAddedToInput) {dateAddedToInput.addEventListener("change",filterProducts);}
+
+    // Clear all filters
+    if (clearFiltersButton) {
+clearFiltersButton.addEventListener(
+"click",
+function () {
+searchInput.value = "";
+categoryFilter.value = "";
+stockStatusFilter.value = "";
+
+        if (dateAddedFromInput) {dateAddedFromInput.value = "";}
+
+        if (dateAddedToInput) {dateAddedToInput.value = "";} filterProducts();});}
+
+    filterProducts();
+
 </script>
 
 </body>
