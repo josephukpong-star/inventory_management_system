@@ -652,8 +652,7 @@ def sales():
 
             try:
                 for line in validated_lines:
-                    inventory_service.stock_out(line["product_id"], line["quantity"], price=line["price"], reason="Sale", unit=line["unit"],)
-
+                    inventory_service.stock_out(line["product_id"], line["quantity"], price=line["price"], reason="Sale", unit=line["unit"], payment_method=payment_method,)
                     transaction = inventory_service.transactions[-1]
                     transaction["payment_method"] = payment_method
                     transaction["sale_reference"] = sale_reference

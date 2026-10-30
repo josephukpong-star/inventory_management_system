@@ -487,7 +487,7 @@ def test_stock_out_sale_records_sales_value():
     inventory = InventoryService()
     product = Product(1, "Laptop", 500000, 10)
     inventory.add_product(product)
-    inventory.stock_out(1, 2, price=650000, reason="Sale",)
+    inventory.stock_out(1, 2, price=650000, reason="Sale", payment_method="Cash")
     transaction = inventory.get_transactions()[0]
     assert transaction["sales_value"] == 1300000
     assert transaction["inventory_cost"] == 1000000
@@ -496,7 +496,7 @@ def test_stock_out_sale_records_gross_profit():
     inventory = InventoryService()
     product = Product(1, "Laptop", 500000, 10)
     inventory.add_product(product)
-    inventory.stock_out(1, 2, price=650000, reason="Sale",)
+    inventory.stock_out(1, 2, price=650000, reason="Sale", payment_method="Cash")
     transaction = inventory.get_transactions()[0]
     gross_profit = (transaction["sales_value"] - transaction["inventory_cost"])
     assert gross_profit == 300000
@@ -1624,7 +1624,7 @@ def test_dashboard_calculates_stock_and_sales_financial_values():
     product = Product(1, "Laptop", 500000, 10)
     inventory.add_product(product)
     inventory.stock_in(1, 5, price=600000)
-    inventory.stock_out(1, 2, price=650000, reason="Sale",)
+    inventory.stock_out(1, 2, price=650000, reason="Sale", payment_method="Cash")
     dashboard = inventory.get_dashboard_data()
     assert dashboard["stock_in_value"] == 3000000
     assert dashboard["stock_out_sales_value"] == 1300000
@@ -2295,7 +2295,7 @@ def test_stock_out_converts_package_quantity_to_base_units():
 
     product = Product(1, "Eggs", 100, 60, "Food", base_unit="piece", selling_units=[ {"name": "crate", "base_quantity": 30}, {"name": "half crate", "base_quantity": 15}, {"name": "piece", "base_quantity": 1},], selling_price=150,)
     inventory.add_product(product)
-    inventory.stock_out(1, 1, price=4500, reason="Sale", unit="half crate",)
+    inventory.stock_out(1, 1, price=4500, reason="Sale", unit="half crate", payment_method="Cash")
 
     updated_product = inventory.get_product(1)
     assert updated_product.quantity == 45

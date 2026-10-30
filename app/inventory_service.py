@@ -303,12 +303,6 @@ class InventoryService:
         valid_reasons = {"Sale", "Damaged Goods", "Internal Use", "Gift/Free Issue", "Other",}
         valid_payment_methods = {"Cash", "Bank Transfer", "Cheque", "Credit",}
 
-        if reason == "Sale":
-            if (payment_method is not None and payment_method not in valid_payment_methods):
-                raise ValueError("Invalid sale payment method.")
-        else:
-            payment_method = None
-
         if reason not in valid_reasons:
             raise ValueError("Invalid stock-out reason")
 
@@ -330,6 +324,14 @@ class InventoryService:
         base_quantity, selected_unit, factor = self._convert_to_base_units(product, quantity, unit, "Stock-out",)
         if base_quantity <= 0:
             raise ValueError("Stock-out quantity must be greater than zero")
+        if reason == "Sale":
+            if not payment_method:
+                raise ValueError("Please select a payment method for this sale.")
+        
+            if payment_method not in valid_payment_methods:
+                raise ValueError("Invalid sale payment method.")
+        else:
+            payment_method = None
 
         inventory_cost = product.price * base_quantity
 

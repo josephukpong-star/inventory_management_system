@@ -322,11 +322,15 @@
                                         </td>
 
                                         <td>
-                                            {{ transaction.get("reason", "Unspecified") }}
+                                            {% if transaction.get("type") == "STOCK-IN" %}
+                                                Purchase
+                                            {% else %}
+                                                {{ transaction.get("reason", "Unspecified") }}
+                                            {% endif %}
 
                                             {% if is_admin
-                                                  and transaction.get("cancelled")
-                                                  and transaction.get("cancellation_reason") %}
+                                                    and transaction.get("cancelled")
+                                                    and transaction.get("cancellation_reason") %}
                                                 <br>
                                                 <small>
                                                     {{ transaction.get("cancellation_reason") }}
@@ -361,8 +365,8 @@
                                             </td>
 
                                             <td>
-                                                {% if transaction.get("reason") == "Sale" %}
-                                                    {{ transaction.get("payment_method", "Unspecified") }}
+                                                {% if transaction.get("payment_method") %}
+                                                {{ transaction.get("payment_method") }}
                                                 {% else %}
                                                     —
                                                 {% endif %}
