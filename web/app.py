@@ -142,29 +142,47 @@ def filter_transactions_by_period(transactions, period, specific_date=None,
 
     return filtered
 
-
 def filter_transactions_by_type(transactions, transaction_filter):
     """Filter stock movements by transaction type or stock-out reason."""
     if transaction_filter == "all":
         return list(transactions)
 
-    if transaction_filter == "sales":
-        return [item for item in transactions if item.get("type") == "STOCK-OUT" and item.get("reason") == "Sale"]
+    # Purchase represents all Stock-In transactions.
+    if transaction_filter in {"purchase", "stock_in"}:
+        return [
+            item for item in transactions
+            if item.get("type") == "STOCK-IN"
+        ]
 
-    if transaction_filter == "stock_in":
-        return [item for item in transactions if item.get("type") == "STOCK-IN"]
+    if transaction_filter == "sales":
+        return [
+            item for item in transactions
+            if item.get("type") == "STOCK-OUT"
+            and item.get("reason") == "Sale"
+        ]
 
     if transaction_filter == "stock_out":
-        return [item for item in transactions if item.get("type") == "STOCK-OUT"]
+        return [
+            item for item in transactions
+            if item.get("type") == "STOCK-OUT"
+        ]
 
-    reason_filters = {"damaged_goods": "Damaged Goods", "internal_use": "Internal Use", "gift_free_issue": "Gift/Free Issue", "other": "Other",}
+    reason_filters = {
+        "damaged_goods": "Damaged Goods",
+        "internal_use": "Internal Use",
+        "gift_free_issue": "Gift/Free Issue",
+        "other": "Other",
+    }
 
     if transaction_filter in reason_filters:
         reason = reason_filters[transaction_filter]
-        return [item for item in transactions if item.get("type") == "STOCK-OUT" and item.get("reason") == reason]
+        return [
+            item for item in transactions
+            if item.get("type") == "STOCK-OUT"
+            and item.get("reason") == reason
+        ]
 
     return []
-
 
 def safe_transaction_for_staff(transaction):
     """
@@ -759,7 +777,12 @@ def transactions():
         if transaction_type and current_type != transaction_type:
             continue
 
-        current_reason = str(transaction.get("reason", "Unspecified"))
+        # Stock-In transactions are displayed and filtered as Purchase.
+        if current_type == "STOCK-IN":
+            current_reason = "Purchase"
+        else:
+            current_reason = str(transaction.get("reason") or "Unspecified")
+
         if reason_filter and current_reason != reason_filter:
             continue
 
@@ -809,7 +832,9 @@ def transactions():
     filtered_transactions.sort(key=lambda item: str(item.get("timestamp", "")), reverse=True,)
 
     # Filter choices come from the actual transaction history.
-    reasons = sorted({str(transaction.get("reason", "Unspecified")) for transaction in all_transactions})
+    reasons = {"Purchase" if str(transaction.get("type", "")).upper() == "STOCK-IN" else str(transaction.get("reason") or "Unspecified") for transaction in all_transactions}
+
+    reasons = sorted(reasons)
 
     payment_methods = ["Cash", "Bank Transfer", "Cheque", "Unspecified"]
 

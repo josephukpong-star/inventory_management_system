@@ -98,7 +98,7 @@
                         <select name="type" id="type">
                             <option value="all" {% if transaction_filter == "all" %}selected{% endif %}>All Transactions</option>
                             <option value="sales" {% if transaction_filter == "sales" %}selected{% endif %}>Sales</option>
-                            <option value="stock_in" {% if transaction_filter == "stock_in" %}selected{% endif %}>Stock In</option>
+                            <option value="purchase" {% if transaction_filter in ["purchase", "stock_in"] %}selected{% endif %}>Purchase</option>
                             <option value="stock_out" {% if transaction_filter == "stock_out" %}selected{% endif %}>All Stock Out</option>
                             <option value="damaged_goods" {% if transaction_filter == "damaged_goods" %}selected{% endif %}>Damaged Goods</option>
                             <option value="internal_use" {% if transaction_filter == "internal_use" %}selected{% endif %}>Internal Use</option>
@@ -159,7 +159,13 @@
                                         <td>{{ transaction.get("type", "") }}</td>
                                         <td>{{ transaction.get("product_name", "Unknown product") }}</td>
                                         <td>{{ transaction.get("quantity", 0) }}</td>
-                                        <td>{{ transaction.get("reason", "—") }}</td>
+                                        <td>
+                                            {% if transaction.get("type") == "STOCK-IN" %}
+                                                Purchase
+                                            {% else %}
+                                                {{ transaction.get("reason") or "—" }}
+                                            {% endif %}
+                                        </td>
 
                                         {% if is_admin %}
                                             <td>
